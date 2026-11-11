@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime, date, timedelta, timezone, UTC
+from datetime import datetime, date, timedelta, UTC
 
 from sqlalchemy import (
     ForeignKey,
