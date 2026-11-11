@@ -1,18 +1,15 @@
 services:
   db:
     image: postgres:18.6-alpine
-
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-online_cinema}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql
-
     healthcheck:
       test:
         [
@@ -23,6 +20,47 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - cinema_network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - cinema_network
+
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - cinema_network
+
+networks:
+  cinema_network:
+    name: cinema_network
+    driver: bridge
 
 volumes:
   postgres_data:
+  redis_data:
+  minio_data:
+
