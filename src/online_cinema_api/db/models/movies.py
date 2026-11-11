@@ -14,7 +14,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from online_cinema_api.db.base import Base
 
-
 movie_genres_table = Table(
     "movie_genres",
     Base.metadata,
@@ -45,7 +44,7 @@ class Genre(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
-    movies: Mapped[list["Movie"]] = relationship(
+    movies: Mapped[list[Movie]] = relationship(
         secondary=movie_genres_table, back_populates="genres"
     )
 
@@ -56,7 +55,7 @@ class Star(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
-    movies: Mapped[list["Movie"]] = relationship(
+    movies: Mapped[list[Movie]] = relationship(
         secondary=movie_stars_table, back_populates="stars"
     )
 
@@ -67,7 +66,7 @@ class Director(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
-    movies: Mapped[list["Movie"]] = relationship(
+    movies: Mapped[list[Movie]] = relationship(
         secondary=movie_directors_table, back_populates="directors"
     )
 
@@ -78,7 +77,7 @@ class Certification(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
-    movies: Mapped[list["Movie"]] = relationship(back_populates="certification")
+    movies: Mapped[list[Movie]] = relationship(back_populates="certification")
 
 
 class Movie(Base):
@@ -103,13 +102,13 @@ class Movie(Base):
         ForeignKey("certifications.id", ondelete="RESTRICT"), nullable=False
     )
 
-    certification: Mapped["Certification"] = relationship(back_populates="movies")
-    genres: Mapped[list["Genre"]] = relationship(
+    certification: Mapped[Certification] = relationship(back_populates="movies")
+    genres: Mapped[list[Genre]] = relationship(
         secondary=movie_genres_table, back_populates="movies"
     )
-    stars: Mapped[list["Star"]] = relationship(
+    stars: Mapped[list[Star]] = relationship(
         secondary=movie_stars_table, back_populates="movies"
     )
-    directors: Mapped[list["Director"]] = relationship(
+    directors: Mapped[list[Director]] = relationship(
         secondary=movie_directors_table, back_populates="movies"
     )

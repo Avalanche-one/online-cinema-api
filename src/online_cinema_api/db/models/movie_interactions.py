@@ -92,13 +92,13 @@ class Comment(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    parent: Mapped["Comment | None"] = relationship(
+    parent: Mapped[Comment | None] = relationship(
         back_populates="replies", remote_side="Comment.id"
     )
-    replies: Mapped[list["Comment"]] = relationship(
+    replies: Mapped[list[Comment]] = relationship(
         back_populates="parent", cascade="all, delete-orphan"
     )
-    likes: Mapped[list["CommentLike"]] = relationship(
+    likes: Mapped[list[CommentLike]] = relationship(
         back_populates="comment", cascade="all, delete-orphan"
     )
 
@@ -113,7 +113,7 @@ class CommentLike(Base):
         ForeignKey("comments.id", ondelete="CASCADE"), primary_key=True
     )
 
-    comment: Mapped["Comment"] = relationship(back_populates="likes")
+    comment: Mapped[Comment] = relationship(back_populates="likes")
 
 
 class Notification(Base):
