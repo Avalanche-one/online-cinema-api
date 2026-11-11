@@ -30,7 +30,6 @@ class OrderStatusEnum(str, enum.Enum):
 
 
 class Order(Base):
-
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -59,14 +58,15 @@ class Order(Base):
 
 
 class OrderItem(Base):
-
     __tablename__ = "order_items"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     order_id: Mapped[int] = mapped_column(
         ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id"), nullable=False, index=True)
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movies.id"), nullable=False, index=True
+    )
     price_at_order: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
 
     order: Mapped[Order] = relationship("Order", back_populates="items")
