@@ -21,5 +21,3 @@ class MovieExistInOrderError(AppError):
 class MovieExistInCart(AppError):
     status_code = 409
     detail = "Movie already in cart"
-
-

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict # noqa
+from pydantic import BaseModel, ConfigDict
 
 
 class CartItemAdd(BaseModel):
