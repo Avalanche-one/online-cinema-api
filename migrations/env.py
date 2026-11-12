@@ -6,6 +6,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+import online_cinema_api.db.models  # noqa: F401
 from online_cinema_api.core.config import settings
 from online_cinema_api.db.base import Base
 
