@@ -1,11 +1,22 @@
-from core.exceptions import MovieExistInCart, MovieExistInOrderError, MovieNotFoundError
-from db.models import Cart, CartItem, Order, OrderItem, OrderStatusEnum
-from db.models.accounts import UserModel
-from db.models.movies import Movie
-from schemas.shopping_cart import CartItemAdd
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from online_cinema_api.core.exceptions import (
+    MovieExistInCart,
+    MovieExistInOrderError,
+    MovieNotFoundError,
+)
+from online_cinema_api.db.models import (
+    Cart,
+    CartItem,
+    Order,
+    OrderItem,
+    OrderStatusEnum,
+)
+from online_cinema_api.db.models.accounts import UserModel
+from online_cinema_api.db.models.movies import Movie
+from online_cinema_api.schemas.shopping_cart import CartItemAdd
 
 
 async def add_movie_to_cart(

@@ -1,12 +1,12 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from core.exceptions import AppError
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from online_cinema_api.api.router import api_router
 from online_cinema_api.core.config import settings
+from online_cinema_api.core.exceptions import AppError
 from online_cinema_api.db.session import engine
 
 
