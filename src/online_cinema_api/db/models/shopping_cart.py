@@ -4,6 +4,7 @@ from sqlalchemy import DateTime, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from online_cinema_api.db.base import Base
+from online_cinema_api.db.models.movies import Movie
 
 
 class Cart(Base):
@@ -28,5 +29,6 @@ class CartItem(Base):
     )
     cart: Mapped[Cart] = relationship(back_populates="cart_item")
     movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id"), nullable=False)
+    movie: Mapped[Movie] = relationship()
 
     __table_args__ = (UniqueConstraint("cart_id", "movie_id"),)
