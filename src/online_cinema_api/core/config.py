@@ -16,10 +16,12 @@ class BaseAppSettings(BaseSettings):
         extra="ignore",
     )
 
+
 class Settings(BaseAppSettings):
     SECRET_KEY_ACCESS: str = os.getenv("SECRET_KEY_ACCESS", os.urandom(32))
     SECRET_KEY_REFRESH: str = os.getenv("SECRET_KEY_REFRESH", os.urandom(32))
     JWT_SIGNING_ALGORITHM: str = os.getenv("JWT_SIGNING_ALGORITHM", "HS256")
+
 
 @lru_cache
 def get_settings() -> Settings:

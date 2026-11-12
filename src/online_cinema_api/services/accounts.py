@@ -12,8 +12,10 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db_session),
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db_session),
     jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
 ) -> UserRead:
     payload = jwt_manager.decode_access_token(token)

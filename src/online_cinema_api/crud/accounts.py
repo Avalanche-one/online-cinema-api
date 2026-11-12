@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from online_cinema_api.db.models.accounts import UserModel
 
 
-async def create_user(db: AsyncSession, email: str, raw_password: str, group_id: int) -> UserModel:
+async def create_user(
+    db: AsyncSession, email: str, raw_password: str, group_id: int
+) -> UserModel:
     db_user = UserModel(email=email, group_id=group_id)
     db_user.password = raw_password
 
