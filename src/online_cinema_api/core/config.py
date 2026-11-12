@@ -4,7 +4,6 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 BASE_DIR = Path(__file__).resolve().parents[3]
 ENV_FILE = BASE_DIR / ".env"
 
@@ -38,7 +37,6 @@ class Settings(BaseAppSettings):
     ACTIVATION_COMPLETE_EMAIL_TEMPLATE_NAME: str = "activation_complete.html"
     PASSWORD_RESET_TEMPLATE_NAME: str = "password_reset_request.html"
     PASSWORD_RESET_COMPLETE_TEMPLATE_NAME: str = "password_reset_complete.html"
-    from src.online_cinema_api.notifications.templates
 
 @lru_cache
 def get_settings() -> Settings:
