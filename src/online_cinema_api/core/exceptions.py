@@ -26,3 +26,43 @@ class MovieExistInCart(AppError):
 class MovieNotInCartError(AppError):
     status_code = 404
     detail = "Movie not found in cart"
+
+
+class UserAlreadyExistsError(AppError):
+    status_code = 409
+    detail = "A user with this email already exists."
+
+
+class UserGroupNotFoundError(AppError):
+    status_code = 500
+    detail = "Default user group not found."
+
+
+class InvalidActivationTokenError(AppError):
+    status_code = 400
+    detail = "Invalid or expired activation token."
+
+
+class AccountAlreadyActiveError(AppError):
+    status_code = 400
+    detail = "User account is already active."
+
+
+class InvalidCredentialsError(AppError):
+    status_code = 401
+    detail = "Invalid email or password."
+
+
+class AccountNotActivatedError(AppError):
+    status_code = 403
+    detail = "User account is not activated."
+
+
+class RefreshTokenNotFoundError(AppError):
+    status_code = 401
+    detail = "Refresh token not found."
+
+
+class UserNotFoundError(AppError):
+    status_code = 404
+    detail = "User not found."

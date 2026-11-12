@@ -68,7 +68,7 @@ class UserModel(Base):
     )
 
     group_id: Mapped[int] = mapped_column(
-        ForeignKey("user_groups.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("user_groups.id", ondelete="RESTRICT"), nullable=False
     )
     group: Mapped[UserGroupModel] = relationship(
         "UserGroupModel", back_populates="users"
@@ -190,7 +190,7 @@ class ActivationTokenModel(TokenBaseModel):
     __table_args__ = (UniqueConstraint("user_id"),)
 
     def __repr__(self):
-        return f"<ActivationTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
+        return f"<ActivationTokenModel(id={self.id}, expires_at={self.expires_at})>"
 
 
 class PasswordResetTokenModel(TokenBaseModel):
@@ -203,7 +203,7 @@ class PasswordResetTokenModel(TokenBaseModel):
     __table_args__ = (UniqueConstraint("user_id"),)
 
     def __repr__(self):
-        return f"<PasswordResetTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
+        return f"<PasswordResetTokenModel(id={self.id}, expires_at={self.expires_at})>"
 
 
 class RefreshTokenModel(TokenBaseModel):
@@ -229,4 +229,4 @@ class RefreshTokenModel(TokenBaseModel):
         return cls(user_id=user_id, expires_at=expires_at, token=token)
 
     def __repr__(self):
-        return f"<RefreshTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
+        return f"<RefreshTokenModel(id={self.id}, expires_at={self.expires_at})>"
