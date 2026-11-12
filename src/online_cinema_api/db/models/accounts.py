@@ -1,10 +1,10 @@
 import enum
 from datetime import UTC, date, datetime, timedelta
 
-from db.base import Base
-from db.validators import accounts as validators
-from security.passwords import hash_password, verify_password
-from security.utils import generate_secure_token
+from online_cinema_api.db.base import Base
+from online_cinema_api.db.validators import accounts as validators
+from online_cinema_api.security.passwords import hash_password, verify_password
+from online_cinema_api.security.utils import generate_secure_token
 from sqlalchemy import (
     Boolean,
     Date,
