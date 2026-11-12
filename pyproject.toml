@@ -12,6 +12,7 @@ dependencies = [
     "passlib>=1.7.4",
     "pydantic-settings>=2.16.2",
     "python-jose>=3.5.0",
+    "redis>=8.1.0",
     "sqlalchemy[asyncio]>=2.1.8",
     "uvicorn[standard]>=0.54.0",
 ]
