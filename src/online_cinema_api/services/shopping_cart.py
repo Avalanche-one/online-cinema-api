@@ -1,11 +1,13 @@
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from online_cinema_api.core.exceptions import (
     MovieExistInCart,
     MovieExistInOrderError,
     MovieNotFoundError,
+    MovieNotInCartError,
 )
 from online_cinema_api.db.models import (
     Cart,
@@ -16,7 +18,7 @@ from online_cinema_api.db.models import (
 )
 from online_cinema_api.db.models.accounts import UserModel
 from online_cinema_api.db.models.movies import Movie
-from online_cinema_api.schemas.shopping_cart import CartItemAdd
+from online_cinema_api.schemas.shopping_cart import CartItemAdd, CartMovieResponse
 
 
 async def add_movie_to_cart(
@@ -64,3 +66,49 @@ async def add_movie_to_cart(
 
     await db.refresh(item)
     return item
+
+
+async def delete_movie_from_cart_by_user_id(
+    db: AsyncSession, data_user: UserModel, movie_id: int
+):
+    movie_for_delete = await db.scalar(
+        select(CartItem)
+        .join(Cart, CartItem.cart_id == Cart.id)
+        .where(Cart.user_id == data_user.id, CartItem.movie_id == movie_id)
+    )
+
+    if movie_for_delete is None:
+        raise MovieNotInCartError
+
+    await db.delete(movie_for_delete)
+    await db.commit()
+
+
+async def get_movie_from_cart(db: AsyncSession, current_user: UserModel):
+    result = (
+        await db.scalars(
+            select(CartItem)
+            .join(Cart, CartItem.cart_id == Cart.id)
+            .where(Cart.user_id == current_user.id)
+            .options(selectinload(CartItem.movie).selectinload(Movie.genres))
+            .order_by(CartItem.added_at)
+        )
+    ).all()
+
+    movies = []
+    total_price = 0
+    for item in result:
+        movie = item.movie
+        movies.append(
+            CartMovieResponse(
+                id=movie.id,
+                name=movie.name,
+                price=movie.price,
+                year=movie.year,
+                genres=[i.name for i in movie.genres],
+                added_at=item.added_at,
+            )
+        )
+        total_price += movie.price
+
+    return {"items": movies, "total_price": total_price}
