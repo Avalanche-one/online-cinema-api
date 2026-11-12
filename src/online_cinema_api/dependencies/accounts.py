@@ -13,6 +13,7 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+
 def get_jwt_auth_manager(
     settings: BaseAppSettings = Depends(get_settings),
 ) -> JWTAuthManagerInterface:
@@ -36,6 +37,7 @@ def get_jwt_auth_manager(
         secret_key_refresh=settings.SECRET_KEY_REFRESH,
         algorithm=settings.JWT_SIGNING_ALGORITHM,
     )
+
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
