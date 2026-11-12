@@ -85,13 +85,15 @@ async def delete_movie_from_cart_by_user_id(
 
 
 async def get_movie_from_cart(db: AsyncSession, current_user: UserModel):
-    result = (await db.scalars(
-        select(CartItem)
-        .join(Cart, CartItem.cart_id == Cart.id)
-        .where(Cart.user_id == current_user.id)
-        .options(selectinload(CartItem.movie).selectinload(Movie.genres))
-        .order_by(CartItem.added_at)
-    )).all()
+    result = (
+        await db.scalars(
+            select(CartItem)
+            .join(Cart, CartItem.cart_id == Cart.id)
+            .where(Cart.user_id == current_user.id)
+            .options(selectinload(CartItem.movie).selectinload(Movie.genres))
+            .order_by(CartItem.added_at)
+        )
+    ).all()
 
     movies = []
     total_price = 0
