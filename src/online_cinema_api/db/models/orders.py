@@ -20,7 +20,7 @@ from online_cinema_api.db.base import Base
 
 if TYPE_CHECKING:
     from online_cinema_api.db.models.accounts import UserModel
-    from online_cinema_api.db.models.movies import MovieModel
+    from online_cinema_api.db.models.movies import Movie
 
 
 class OrderStatusEnum(str, enum.Enum):
@@ -70,7 +70,7 @@ class OrderItem(Base):
     price_at_order: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
 
     order: Mapped[Order] = relationship("Order", back_populates="items")
-    movie: Mapped[MovieModel] = relationship("MovieModel")
+    movie: Mapped[Movie] = relationship("Movie")
 
     __table_args__ = (
         UniqueConstraint("order_id", "movie_id", name="unique_order_movie_constraint"),
