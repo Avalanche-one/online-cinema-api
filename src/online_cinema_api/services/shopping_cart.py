@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from online_cinema_api.core.exceptions import (
     MovieExistInCart,
     MovieExistInOrderError,
-    MovieNotFoundError, MovieNotInCartError,
+    MovieNotFoundError,
+    MovieNotInCartError,
 )
 from online_cinema_api.db.models import (
     Cart,
@@ -66,14 +67,13 @@ async def add_movie_to_cart(
     return item
 
 
-async def delete_movie_from_cart_by_user_id(db: AsyncSession, data_user: UserModel, movie_id: int):
+async def delete_movie_from_cart_by_user_id(
+    db: AsyncSession, data_user: UserModel, movie_id: int
+):
     movie_for_delete = await db.scalar(
         select(CartItem)
         .join(Cart, CartItem.cart_id == Cart.id)
-        .where(
-            Cart.user_id == data_user.id,
-            CartItem.movie_id == movie_id
-        )
+        .where(Cart.user_id == data_user.id, CartItem.movie_id == movie_id)
     )
 
     if movie_for_delete is None:
