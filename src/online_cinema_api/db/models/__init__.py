@@ -21,6 +21,7 @@ from online_cinema_api.db.models.movies import (
     Movie,
     Star,
 )
+from online_cinema_api.db.models.orders import Order, OrderItem, OrderStatusEnum
 from online_cinema_api.db.models.shopping_cart import Cart, CartItem
 
 __all__ = [
@@ -37,6 +38,9 @@ __all__ = [
     "MovieRating",
     "MovieReaction",
     "Notification",
+    "Order",
+    "OrderItem",
+    "OrderStatusEnum",
     "PasswordResetTokenModel",
     "RefreshTokenModel",
     "Star",
