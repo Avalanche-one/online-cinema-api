@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -115,10 +115,11 @@ async def get_movie_from_cart(db: AsyncSession, current_user: UserModel):
 
 
 async def delete_all_movie_from_cart(db: AsyncSession, current_user: UserModel):
-    query = (select(CartItem.id)
-             .join(Cart, CartItem.cart_id == Cart.id)
-             .where(Cart.user_id == current_user.id)
-             )
+    query = (
+        select(CartItem.id)
+        .join(Cart, CartItem.cart_id == Cart.id)
+        .where(Cart.user_id == current_user.id)
+    )
     delete_query = delete(CartItem).where(CartItem.id.in_(query))
     await db.execute(delete_query)
     await db.commit()
