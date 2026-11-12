@@ -1,10 +1,6 @@
 import enum
 from datetime import UTC, date, datetime, timedelta
 
-from online_cinema_api.db.base import Base
-from online_cinema_api.db.validators import accounts as validators
-from online_cinema_api.security.passwords import hash_password, verify_password
-from online_cinema_api.security.utils import generate_secure_token
 from sqlalchemy import (
     Boolean,
     Date,
@@ -18,6 +14,11 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
+
+from online_cinema_api.db.base import Base
+from online_cinema_api.db.validators import accounts as validators
+from online_cinema_api.security.passwords import hash_password, verify_password
+from online_cinema_api.security.utils import generate_secure_token
 
 
 class UserGroupEnum(str, enum.Enum):
