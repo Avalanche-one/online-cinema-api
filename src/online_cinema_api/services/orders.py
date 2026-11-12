@@ -1,0 +1,98 @@
+import math
+from datetime import datetime
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from online_cinema_api.db.models import Order, OrderItem, OrderStatusEnum
+
+
+class OrderCancellationError(Exception):
+    """Raised when an order cannot be canceled in its current status."""
+
+
+async def get_order(db: AsyncSession, order_id: int) -> Order | None:
+    result = await db.execute(
+        select(Order).options(selectinload(Order.items)).where(Order.id == order_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def list_orders(
+    db: AsyncSession,
+    *,
+    page: int,
+    per_page: int,
+    user_id: int | None = None,
+    status: OrderStatusEnum | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+) -> tuple[list[Order], int, int]:
+    conditions = []
+    if user_id is not None:
+        conditions.append(Order.user_id == user_id)
+    if status is not None:
+        conditions.append(Order.status == status)
+    if date_from is not None:
+        conditions.append(Order.created_at >= date_from)
+    if date_to is not None:
+        conditions.append(Order.created_at <= date_to)
+
+    total_items = await db.scalar(
+        select(func.count()).select_from(Order).where(*conditions)
+    )
+    total_items = total_items or 0
+    total_pages = math.ceil(total_items / per_page)
+
+    result = await db.execute(
+        select(Order)
+        .options(selectinload(Order.items))
+        .where(*conditions)
+        .order_by(Order.created_at.desc(), Order.id.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+    )
+    return list(result.scalars().all()), total_items, total_pages
+
+
+async def cancel_order(db: AsyncSession, order: Order) -> Order:
+    if order.status == OrderStatusEnum.PAID:
+        raise OrderCancellationError(
+            "A paid order can only be canceled through a refund request."
+        )
+    if order.status == OrderStatusEnum.CANCELED:
+        raise OrderCancellationError("The order is already canceled.")
+
+    order.status = OrderStatusEnum.CANCELED
+    await db.commit()
+    await db.refresh(order, attribute_names=["items"])
+    return order
+
+
+async def get_purchased_movie_ids(db: AsyncSession, user_id: int) -> set[int]:
+    result = await db.execute(
+        select(OrderItem.movie_id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .where(Order.user_id == user_id, Order.status == OrderStatusEnum.PAID)
+    )
+    return set(result.scalars().all())
+
+
+async def get_pending_movie_ids(db: AsyncSession, user_id: int) -> set[int]:
+    result = await db.execute(
+        select(OrderItem.movie_id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .where(Order.user_id == user_id, Order.status == OrderStatusEnum.PENDING)
+    )
+    return set(result.scalars().all())
+
+
+async def is_movie_purchased(db: AsyncSession, movie_id: int) -> bool:
+    result = await db.execute(
+        select(OrderItem.id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .where(OrderItem.movie_id == movie_id, Order.status == OrderStatusEnum.PAID)
+        .limit(1)
+    )
+    return result.first() is not None

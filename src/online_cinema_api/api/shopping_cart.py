@@ -5,10 +5,15 @@ from starlette import status
 from online_cinema_api.db.models.accounts import UserModel
 from online_cinema_api.db.session import get_db_session
 from online_cinema_api.dependencies import get_current_user
-from online_cinema_api.schemas.shopping_cart import CartItemAdd, CartItemResponse
+from online_cinema_api.schemas.shopping_cart import (
+    CartItemAdd,
+    CartItemResponse,
+    CartResponse,
+)
 from online_cinema_api.services.shopping_cart import (
     add_movie_to_cart,
     delete_movie_from_cart_by_user_id,
+    get_movie_from_cart,
 )
 
 router = APIRouter(tags=["ShoppingCart"])
@@ -34,3 +39,11 @@ async def delete_movie(
     current_user: UserModel = Depends(get_current_user),
 ):
     return await delete_movie_from_cart_by_user_id(db, current_user, movie_id)
+
+
+@router.get("/cart", response_model=CartResponse, status_code=status.HTTP_200_OK)
+async def read_cart(
+    db: AsyncSession = Depends(get_db_session),
+    current_user: UserModel = Depends(get_current_user),
+):
+    return await get_movie_from_cart(db, current_user)
