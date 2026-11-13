@@ -1,8 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from online_cinema_api.core.config import BaseAppSettings, Settings, get_settings
+from online_cinema_api.core.exceptions import PermissionForReadUserCartError
+from online_cinema_api.db.models import UserModel
+from online_cinema_api.db.models.accounts import UserGroupEnum
 from online_cinema_api.db.session import get_db_session
 from online_cinema_api.notifications import EmailSender, EmailSenderInterface
 from online_cinema_api.schemas import UserRead
@@ -55,6 +60,23 @@ async def get_current_user(
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     return UserRead.model_validate(db_user)
+
+
+async def required_moderator_or_admin(
+    current_user: UserRead = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    group_of_current_user = await db.scalar(
+        select(UserModel)
+        .options(selectinload(UserModel.group))
+        .where(UserModel.id == current_user.id)
+    )
+    if group_of_current_user is None or group_of_current_user.group.name not in (
+        UserGroupEnum.MODERATOR,
+        UserGroupEnum.ADMIN,
+    ):
+        raise PermissionForReadUserCartError
+    return current_user
 
 
 def get_accounts_email_notificator(
