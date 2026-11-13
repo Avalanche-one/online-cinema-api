@@ -1,4 +1,4 @@
-﻿from online_cinema_api.core.exceptions import AppError
+from online_cinema_api.core.exceptions import AppError
 
 
 class MovieAlreadyExistsError(AppError):
