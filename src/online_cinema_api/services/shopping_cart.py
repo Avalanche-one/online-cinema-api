@@ -137,3 +137,28 @@ async def is_movie_in_any_cart(db: AsyncSession, movie_id: int):
         select(CartItem.id).where(CartItem.movie_id == movie_id).limit(1)
     )
     return bool(is_movie_in_cart)
+
+
+async def remove_purchased_movies(db: AsyncSession, user_id: int):
+    cart = (
+        select(OrderItem.movie_id)
+        .join(Order, OrderItem.order_id == Order.id)
+        .where(Order.status == OrderStatusEnum.PAID, Order.user_id == user_id)
+    )
+
+    cartilage = (
+        await db.scalars(
+            select(CartItem)
+            .join(Cart, CartItem.cart_id == Cart.id)
+            .where(Cart.user_id == user_id, CartItem.movie_id.in_(cart))
+            .options(selectinload(CartItem.movie))
+        )
+    ).all()
+
+    name_of_deleted_movie = [i.movie.name for i in cartilage]
+
+    for obj in cartilage:
+        await db.delete(obj)
+    await db.commit()
+
+    return name_of_deleted_movie
