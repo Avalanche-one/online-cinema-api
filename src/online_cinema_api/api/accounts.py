@@ -30,7 +30,6 @@ from online_cinema_api.schemas import (
     PasswordResetRequestSchema,
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
-    UserActivationRequestSchema,
     UserLoginRequestSchema,
     UserLoginResponseSchema,
     UserRegistrationRequestSchema,
@@ -84,20 +83,19 @@ async def register_user(
     return UserRegistrationResponseSchema.model_validate(new_user)
 
 
-@router.post(
+@router.get(
     "/activate/",
     response_model=MessageResponseSchema,
     summary="Activate User Account",
     status_code=status.HTTP_200_OK,
 )
 async def activate_account(
-    activation_data: UserActivationRequestSchema,
+    token: str,
     db: AsyncSession = Depends(get_db_session),
     email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
-    token_record = await accounts_crud.get_activation_token_with_user(
-        db, str(activation_data.email), activation_data.token
-    )
+    # Оскільки у вас є тільки token (без email у query), потрібно знаходити токен у БД разом із користувачем за самим токеном:
+    token_record = await accounts_crud.get_activation_token_by_token(db, token)
 
     now_utc = datetime.now(UTC)
     if (
@@ -115,9 +113,7 @@ async def activate_account(
     await accounts_crud.activate_user_account(db, user, token_record)
 
     login_link = f"{settings.DOMAIN}/api/v1/accounts/login/"
-    await email_sender.send_activation_complete_email(
-        str(activation_data.email), login_link
-    )
+    await email_sender.send_activation_complete_email(str(user.email), login_link)
 
     return MessageResponseSchema(message="User account activated successfully.")
 
