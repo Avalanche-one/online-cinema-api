@@ -1,4 +1,4 @@
-from core.exceptions import PermissionForReadUserCartError
+from online_cinema_api.core.exceptions import PermissionForReadUserCartError
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
