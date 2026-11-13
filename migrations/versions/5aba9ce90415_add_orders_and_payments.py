@@ -6,9 +6,8 @@ Revises: 4bfa4d0331c0
 
 from collections.abc import Sequence
 
-import sqlalchemy as sa
-
 from alembic import op
+import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "5aba9ce90415"
