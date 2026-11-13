@@ -86,3 +86,13 @@ class PendingOrderExistsError(AppError):
 class OrderCancellationError(AppError):
     status_code = 409
     detail = "The order cannot be canceled."
+
+
+class PermissionForReadUserCartError(AppError):
+    status_code = 403
+    detail = "Not enough permissions"
+
+
+class MovieInUserCartsError(AppError):
+    status_code = 409
+    detail = "This movie in cart users"
