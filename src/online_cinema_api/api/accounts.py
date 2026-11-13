@@ -30,7 +30,6 @@ from online_cinema_api.schemas import (
     PasswordResetRequestSchema,
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
-    UserActivationRequestSchema,
     UserLoginRequestSchema,
     UserLoginResponseSchema,
     UserRegistrationRequestSchema,
