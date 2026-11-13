@@ -165,3 +165,15 @@ async def recreate_activation_token(
     db.add(activation_token)
     await db.commit()
     return activation_token
+
+async def get_activation_token_by_token(db: AsyncSession, token: str) -> ActivationTokenModel | None:
+    """
+    Шукає запис активаційного токена за самим токеном разом із пов'язаним користувачем.
+    """
+    stmt = (
+        select(ActivationTokenModel)
+        .options(joinedload(ActivationTokenModel.user))
+        .where(ActivationTokenModel.token == token)
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
