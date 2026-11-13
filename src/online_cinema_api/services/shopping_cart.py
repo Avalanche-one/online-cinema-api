@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +19,7 @@ from online_cinema_api.db.models import (
     OrderItem,
     OrderStatusEnum,
 )
-from online_cinema_api.db.models.accounts import UserModel
+from online_cinema_api.db.models.accounts import UserModel, UserProfileModel
 from online_cinema_api.db.models.movies import Movie
 from online_cinema_api.schemas.shopping_cart import CartItemAdd, CartMovieResponse
 
@@ -137,3 +139,71 @@ async def is_movie_in_any_cart(db: AsyncSession, movie_id: int):
         select(CartItem.id).where(CartItem.movie_id == movie_id).limit(1)
     )
     return bool(is_movie_in_cart)
+
+
+async def remove_purchased_movies(db: AsyncSession, user_id: int):
+    cart = (
+        select(OrderItem.movie_id)
+        .join(Order, OrderItem.order_id == Order.id)
+        .where(Order.status == OrderStatusEnum.PAID, Order.user_id == user_id)
+    )
+
+    cartilage = (
+        await db.scalars(
+            select(CartItem)
+            .join(Cart, CartItem.cart_id == Cart.id)
+            .where(Cart.user_id == user_id, CartItem.movie_id.in_(cart))
+            .options(selectinload(CartItem.movie))
+        )
+    ).all()
+
+    name_of_deleted_movie = [i.movie.name for i in cartilage]
+
+    for obj in cartilage:
+        await db.delete(obj)
+    await db.commit()
+
+    return name_of_deleted_movie
+
+
+async def remove_unavailable_movies(db: AsyncSession, user_id: int):
+    min_age_certification = {
+        "G": 0,
+        "PG": 0,
+        "PG-13": 13,
+        "R": 17,
+        "NC-17": 18,
+    }
+
+    born = await db.scalar(
+        select(UserProfileModel.date_of_birth).where(
+            UserProfileModel.user_id == user_id
+        )
+    )
+    if born is None:
+        return []
+
+    cart_item_for_user = (
+        await db.scalars(
+            select(CartItem)
+            .join(Cart, CartItem.cart_id == Cart.id)
+            .where(Cart.user_id == user_id)
+            .options(selectinload(CartItem.movie).selectinload(Movie.certification))
+        )
+    ).all()
+
+    name_cart_item_for_delete = []
+
+    today = date.today()
+
+    age_user = (
+        today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    )
+
+    for item in cart_item_for_user:
+        if min_age_certification.get(item.movie.certification.name, 0) > age_user:
+            name_cart_item_for_delete.append(item.movie.name)
+            await db.delete(item)
+    await db.commit()
+
+    return name_cart_item_for_delete
