@@ -37,6 +37,12 @@ ignore = [
     "B008", # ignore FastAPI Depends in function argument defaults
 ]
 
+[tool.ruff.lint]
+exclude = ["migrations/versions/*.py"]
+
+[tool.ruff.format]
+exclude = ["migrations/versions/*.py"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
