@@ -21,7 +21,11 @@ from online_cinema_api.db.models import (
 )
 from online_cinema_api.db.models.accounts import UserModel, UserProfileModel
 from online_cinema_api.db.models.movies import Movie
-from online_cinema_api.schemas.shopping_cart import CartItemAdd, CartMovieResponse
+from online_cinema_api.schemas.shopping_cart import (
+    CartItemAdd,
+    CartMovieResponse,
+    MoviePurchasedResponse,
+)
 
 
 async def add_movie_to_cart(
@@ -207,3 +211,37 @@ async def remove_unavailable_movies(db: AsyncSession, user_id: int):
     await db.commit()
 
     return name_cart_item_for_delete
+
+
+async def get_purchased_movies(db: AsyncSession, user_id: int, limit: int, skip: int):
+    query = (
+        select(OrderItem.movie_id)
+        .join(Order, OrderItem.order_id == Order.id)
+        .where(Order.user_id == user_id, Order.status == OrderStatusEnum.PAID)
+    )
+
+    purchased_movies = (
+        await db.scalars(
+            select(Movie)
+            .where(Movie.id.in_(query))
+            .limit(limit)
+            .offset(skip)
+            .order_by(Movie.id)
+            .options(selectinload(Movie.genres))
+        )
+    ).all()
+
+    result = []
+
+    for movies in purchased_movies:
+        result.append(
+            MoviePurchasedResponse(
+                id=movies.id,
+                name=movies.name,
+                price=movies.price,
+                year=movies.year,
+                genres=[movie.name for movie in movies.genres],
+            )
+        )
+
+    return result

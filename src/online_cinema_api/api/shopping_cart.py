@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -11,12 +11,14 @@ from online_cinema_api.schemas.shopping_cart import (
     CartItemAdd,
     CartItemResponse,
     CartResponse,
+    MoviePurchasedResponse,
 )
 from online_cinema_api.services.shopping_cart import (
     add_movie_to_cart,
     delete_all_movie_from_cart,
     delete_movie_from_cart_by_user_id,
     get_movie_from_cart,
+    get_purchased_movies,
     see_cart_user_for_admin,
 )
 
@@ -68,3 +70,13 @@ async def all_user_item_in_cart(
     _: UserRead = Depends(required_moderator_or_admin),
 ):
     return await see_cart_user_for_admin(db, user_id)
+
+
+@router.get("/cart/purchased", response_model=list[MoviePurchasedResponse])
+async def get_paid_items(
+    limit: int = Query(10, ge=1, le=20),
+    skip: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db_session),
+    current_user: UserRead = Depends(get_current_user),
+):
+    return await get_purchased_movies(db, current_user.id, limit, skip)
