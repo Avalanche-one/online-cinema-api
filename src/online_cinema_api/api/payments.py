@@ -56,14 +56,16 @@ async def checkout(
         stripe_session = await stripe.checkout.Session.create_async(
             mode="payment",
             customer_email=current_user.email,
-            line_items=[{
-                "price_data": {
-                    "currency": "usd",
-                    "unit_amount": to_cents(amount),
-                    "product_data": {"name": f"Order #{order.id}"},
-                },
-                "quantity": 1,
-            }],
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "usd",
+                        "unit_amount": to_cents(amount),
+                        "product_data": {"name": f"Order #{order.id}"},
+                    },
+                    "quantity": 1,
+                }
+            ],
             success_url=f"{BASE_URL}/success?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{BASE_URL}/cancel",
             metadata={
@@ -98,7 +100,7 @@ async def stripe_webhook(
             request.headers.get("stripe-signature"),
             WEBHOOK_SECRET,
         )
-    except (ValueError, stripe.SignatureVerificationError):
+    except ValueError, stripe.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Invalid webhook")
 
     obj = event["data"]["object"]
@@ -109,7 +111,9 @@ async def stripe_webhook(
         if not payment or payment.status != PaymentStatus.PENDING:
             return {"status": "ignored"}
 
-        if obj["payment_status"] != "paid" or obj["amount_total"] != to_cents(payment.amount):
+        if obj["payment_status"] != "paid" or obj["amount_total"] != to_cents(
+            payment.amount
+        ):
             payment.status = PaymentStatus.CANCELED
             await db.commit()
             return {"status": "amount_mismatch"}
