@@ -8,9 +8,9 @@ Create Date: 2026-11-13 16:43:49.002924
 
 from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 from online_cinema_api.db.models.accounts import UserGroupEnum
 
 # revision identifiers, used by Alembic.
