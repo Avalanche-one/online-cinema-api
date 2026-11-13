@@ -171,8 +171,6 @@ async def revalidate_order_total(db: AsyncSession, order: Order) -> Order:
 
     for item in order.items:
         item.price_at_order = current_prices[item.movie_id]
-    order.total_amount = sum(
-        (item.price_at_order for item in order.items), Decimal(0)
-    )
+    order.total_amount = sum((item.price_at_order for item in order.items), Decimal(0))
     await db.commit()
     return await get_order(db, order.id)
