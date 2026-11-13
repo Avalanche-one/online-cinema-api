@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from online_cinema_api.core.config import Settings, get_settings
+from online_cinema_api.core.config import Settings, get_settings, settings
 from online_cinema_api.core.exceptions import (
     AccountAlreadyActiveError,
     AccountNotActivatedError,
@@ -76,7 +76,7 @@ async def register_user(
             detail="An error occurred during user creation.",
         ) from e
 
-    activation_link = "http://127.0.0.1/accounts/activate/"
+    activation_link = f"{settings.DOMAIN}/api/v1/accounts/activate/"
     await email_sender.send_activation_email(new_user.email, activation_link)
 
     return UserRegistrationResponseSchema.model_validate(new_user)
@@ -112,7 +112,7 @@ async def activate_account(
 
     await accounts_crud.activate_user_account(db, user, token_record)
 
-    login_link = "http://127.0.0.1/accounts/login/"
+    login_link = f"{settings.DOMAIN}/api/v1/accounts/login/"
     await email_sender.send_activation_complete_email(
         str(activation_data.email), login_link
     )
@@ -140,7 +140,7 @@ async def request_password_reset_token(
 
     await accounts_crud.recreate_password_reset_token(db, cast(int, user.id))
 
-    password_reset_complete_link = "http://127.0.0.1/accounts/password-reset-complete/"
+    password_reset_complete_link = f"{settings.DOMAIN}/api/v1/accounts/password-reset-complete/"
     await email_sender.send_password_reset_email(
         str(data.email), password_reset_complete_link
     )
@@ -187,7 +187,7 @@ async def reset_password(
             detail="An error occurred while resetting the password.",
         )
 
-    login_link = "http://127.0.0.1/accounts/login/"
+    login_link = f"{settings.DOMAIN}/api/v1/accounts/login/"
     await email_sender.send_password_reset_complete_email(str(data.email), login_link)
 
     return MessageResponseSchema(message="Password reset successfully.")
@@ -289,7 +289,7 @@ async def resend_activation_token(
 
     await accounts_crud.recreate_activation_token(db, cast(int, user.id))
 
-    activation_link = "http://127.0.0.1/accounts/activate/"
+    activation_link = f"{settings.DOMAIN}/api/v1/accounts/activate/"
     await email_sender.send_activation_email(user.email, activation_link)
 
     return MessageResponseSchema(message="Activation email resent successfully.")

@@ -41,6 +41,8 @@ class Settings(BaseAppSettings):
     PASSWORD_RESET_TEMPLATE_NAME: str = "password_reset_request.html"
     PASSWORD_RESET_COMPLETE_TEMPLATE_NAME: str = "password_reset_complete.html"
 
+    DOMAIN: str = os.getenv("DOMAIN", "localhost")
+
 
 @lru_cache
 def get_settings() -> Settings:
