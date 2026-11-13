@@ -21,9 +21,6 @@ from online_cinema_api.schemas.movies import NameCreateSchema
 NamedModel = type[Genre] | type[Star] | type[Director]
 
 
-# --- Movie ---
-
-
 async def get_movie_by_id(db: AsyncSession, movie_id: int) -> Movie:
     movie = await db.scalar(
         select(Movie)
@@ -41,7 +38,6 @@ async def get_movie_by_id(db: AsyncSession, movie_id: int) -> Movie:
 
 
 async def save_movie(db: AsyncSession, movie: Movie) -> Movie:
-    """Зберегти новий або змінений фільм і повернути його з усіма зв'язками."""
     db.add(movie)
     try:
         await db.flush()  # порушення unique (name, year, time) виникає тут
@@ -68,9 +64,6 @@ async def get_by_ids(db: AsyncSession, model: NamedModel, ids: set[int]) -> list
     if not ids:
         return []
     return list((await db.scalars(select(model).where(model.id.in_(ids)))).all())
-
-
-# --- Genre / Star / Director ---
 
 
 async def list_named(db: AsyncSession, model: NamedModel) -> list:

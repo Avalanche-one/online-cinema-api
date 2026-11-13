@@ -5,8 +5,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-# --- Довідники ---
-
 
 class NamedEntitySchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -36,8 +34,6 @@ class GenreWithCountSchema(GenreSchema):
 
 
 class NameCreateSchema(BaseModel):
-    """Створення жанру, зірки, режисера чи сертифікації (CRUD модератора)."""
-
     name: Annotated[str, Field(min_length=1, max_length=100)]
 
 
@@ -45,12 +41,7 @@ class NameUpdateSchema(NameCreateSchema):
     pass
 
 
-# --- Фільм: відповіді ---
-
-
 class MovieListItemSchema(BaseModel):
-    """Скорочені дані для списку (каталог, обране)."""
-
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -65,8 +56,6 @@ class MovieListItemSchema(BaseModel):
 
 
 class MovieDetailSchema(MovieListItemSchema):
-    """Повна картка фільму."""
-
     meta_score: float | None
     gross: float | None
     description: str
@@ -74,8 +63,6 @@ class MovieDetailSchema(MovieListItemSchema):
     stars: list[StarSchema]
     directors: list[DirectorSchema]
 
-
-# --- Фільм: створення й оновлення (модератор) ---
 
 YearField = Annotated[int, Field(ge=1888, le=2100)]
 ImdbField = Annotated[float, Field(ge=0, le=10)]
@@ -99,8 +86,6 @@ class MovieCreateSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    """Часткове оновлення: передаються лише поля, що змінюються."""
-
     name: Annotated[str | None, Field(min_length=1, max_length=250)] = None
     year: YearField | None = None
     time: Annotated[int | None, Field(gt=0)] = None
@@ -114,9 +99,6 @@ class MovieUpdateSchema(BaseModel):
     genre_ids: list[int] | None = None
     star_ids: list[int] | None = None
     director_ids: list[int] | None = None
-
-
-# --- Пагінація, фільтри, сортування ---
 
 
 class MovieSortBy(StrEnum):
@@ -133,8 +115,6 @@ class SortOrder(StrEnum):
 
 
 class MovieQueryParams(BaseModel):
-    """Пошук, фільтри, сортування й пагінація (каталог та обране)."""
-
     page: Annotated[int, Field(ge=1)] = 1
     per_page: Annotated[int, Field(ge=1, le=100)] = 20
 

@@ -31,7 +31,6 @@ async def _load_related(
 
 
 async def _movie_has_orders(db: AsyncSession, movie_id: int) -> bool:
-    # order_items.movie_id без CASCADE, тож блокує замовлення з будь-яким статусом
     found = await db.scalar(
         select(OrderItem.id).where(OrderItem.movie_id == movie_id).limit(1)
     )
@@ -89,7 +88,6 @@ async def delete_movie(db: AsyncSession, movie_id: int, force: bool = False) -> 
     if await is_movie_in_any_cart(db, movie_id):
         if not force:
             raise MovieInUserCartsError
-        # без commit: видалення з кошиків і самого фільму відбудеться однією транзакцією
         await db.execute(delete(CartItem).where(CartItem.movie_id == movie_id))
 
     await movies_crud.remove_movie(db, movie)
