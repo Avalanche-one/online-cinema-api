@@ -36,8 +36,6 @@ testpaths = ["tests"]
 ignore = [
     "B008", # ignore FastAPI Depends in function argument defaults
 ]
-
-[tool.ruff.lint]
 exclude = ["migrations/versions/*.py"]
 
 [tool.ruff.format]
