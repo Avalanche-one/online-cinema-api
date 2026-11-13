@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +19,7 @@ from online_cinema_api.db.models import (
     OrderItem,
     OrderStatusEnum,
 )
-from online_cinema_api.db.models.accounts import UserModel
+from online_cinema_api.db.models.accounts import UserModel, UserProfileModel
 from online_cinema_api.db.models.movies import Movie
 from online_cinema_api.schemas.shopping_cart import CartItemAdd, CartMovieResponse
 
@@ -162,3 +164,46 @@ async def remove_purchased_movies(db: AsyncSession, user_id: int):
     await db.commit()
 
     return name_of_deleted_movie
+
+
+async def remove_unavailable_movies(db: AsyncSession, user_id: int):
+    min_age_certification = {
+        "G": 0,
+        "PG": 0,
+        "PG-13": 13,
+        "R": 17,
+        "NC-17": 18,
+    }
+
+    born = await db.scalar(
+        select(UserProfileModel.date_of_birth).where(
+            UserProfileModel.user_id == user_id
+        )
+    )
+    if born is None:
+        return []
+
+    cart_item_for_user = (
+        await db.scalars(
+            select(CartItem)
+            .join(Cart, CartItem.cart_id == Cart.id)
+            .where(Cart.user_id == user_id)
+            .options(selectinload(CartItem.movie).selectinload(Movie.certification))
+        )
+    ).all()
+
+    name_cart_item_for_delete = []
+
+    today = date.today()
+
+    age_user = (
+        today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    )
+
+    for item in cart_item_for_user:
+        if min_age_certification.get(item.movie.certification.name, 0) > age_user:
+            name_cart_item_for_delete.append(item.movie.name)
+            await db.delete(item)
+    await db.commit()
+
+    return name_cart_item_for_delete
