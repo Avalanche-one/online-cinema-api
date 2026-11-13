@@ -39,6 +39,25 @@ services:
     networks:
       - cinema_network
 
+  web:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-online_cinema}"
+      REDIS_URL: "redis://redis:6379/0"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cinema_network
+
   celery-worker:
     build:
       context: .
