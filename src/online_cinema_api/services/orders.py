@@ -120,7 +120,7 @@ async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
     order = Order(
         user_id=user_id,
         status=OrderStatusEnum.PENDING,
-        total_amount=sum((item.movie.price for item in items_to_order), Decimal("0")),
+        total_amount=sum((item.movie.price for item in items_to_order), Decimal(0)),
         items=[
             OrderItem(movie_id=item.movie_id, price_at_order=item.movie.price)
             for item in items_to_order
@@ -162,8 +162,6 @@ async def revalidate_order_total(db: AsyncSession, order: Order) -> Order:
 
     for item in order.items:
         item.price_at_order = current_prices[item.movie_id]
-    order.total_amount = sum(
-        (item.price_at_order for item in order.items), Decimal("0")
-    )
+    order.total_amount = sum((item.price_at_order for item in order.items), Decimal(0))
     await db.commit()
     return await get_order(db, order.id)
