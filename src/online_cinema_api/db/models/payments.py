@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
+from sqlalchemy import DECIMAL, DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from online_cinema_api.db.base import Base
@@ -34,9 +34,9 @@ class PaymentModel(Base):
     )
     status: Mapped[PaymentStatus] = mapped_column(
         default=PaymentStatus.PENDING,
-        server_default=PaymentStatus.PENDING.value,
+        server_default=PaymentStatus.PENDING.name,
     )
-    amount: Mapped[Decimal] = mapped_column(Numeric(10, 2))
+    amount: Mapped[Decimal] = mapped_column(DECIMAL(10, 2))
     external_payment_id: Mapped[str | None] = mapped_column(String(255))
 
     user: Mapped[UserModel] = relationship()
