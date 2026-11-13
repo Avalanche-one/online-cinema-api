@@ -130,3 +130,10 @@ async def see_cart_user_for_admin(db: AsyncSession, user_id: int):
     if await db.get(UserModel, user_id) is None:
         raise UserNotFoundError
     return await get_movie_from_cart(db, user_id)
+
+
+async def is_movie_in_any_cart(db: AsyncSession, movie_id: int):
+    is_movie_in_cart = await db.scalar(
+        select(CartItem.id).where(CartItem.movie_id == movie_id).limit(1)
+    )
+    return bool(is_movie_in_cart)
