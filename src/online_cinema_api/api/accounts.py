@@ -139,11 +139,11 @@ async def request_password_reset_token(
             message="If you are registered, you will receive an email with instructions."
         )
 
-    token_record = await accounts_crud.recreate_password_reset_token(db, cast(int, user.id))
-
-    password_reset_complete_link = (
-        f"{settings.DOMAIN}/api/v1/accounts/password-reset/complete/?email={quote(str(data.email))}&token={token_record.token}"
+    token_record = await accounts_crud.recreate_password_reset_token(
+        db, cast(int, user.id)
     )
+
+    password_reset_complete_link = f"{settings.DOMAIN}/api/v1/accounts/password-reset/complete/?email={quote(str(data.email))}&token={token_record.token}"
     await email_sender.send_password_reset_email(
         str(data.email), password_reset_complete_link
     )
