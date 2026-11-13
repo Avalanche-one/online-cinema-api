@@ -11,18 +11,16 @@ from online_cinema_api.core.exceptions import (
     OrderCancellationError,
     PendingOrderExistsError,
 )
-
-from online_cinema_api.services.shopping_cart import (
-    remove_purchased_movies,
-    remove_unavailable_movies,
-)
-
 from online_cinema_api.db.models import (
     Cart,
     CartItem,
     Order,
     OrderItem,
     OrderStatusEnum,
+)
+from online_cinema_api.services.shopping_cart import (
+    remove_purchased_movies,
+    remove_unavailable_movies,
 )
 
 
@@ -128,7 +126,7 @@ async def create_order_from_cart(
     order = Order(
         user_id=user_id,
         status=OrderStatusEnum.PENDING,
-        total_amount=sum((item.movie.price for item in cart_items), Decimal("0")),
+        total_amount=sum((item.movie.price for item in cart_items), Decimal(0)),
         items=[
             OrderItem(movie_id=item.movie_id, price_at_order=item.movie.price)
             for item in cart_items
