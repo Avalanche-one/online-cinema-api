@@ -22,6 +22,11 @@ from online_cinema_api.db.models.movies import (
     Star,
 )
 from online_cinema_api.db.models.orders import Order, OrderItem, OrderStatusEnum
+from online_cinema_api.db.models.payments import (
+    PaymentItemModel,
+    PaymentModel,
+    PaymentStatus,
+)
 from online_cinema_api.db.models.shopping_cart import Cart, CartItem
 
 __all__ = [
@@ -42,6 +47,9 @@ __all__ = [
     "OrderItem",
     "OrderStatusEnum",
     "PasswordResetTokenModel",
+    "PaymentItemModel",
+    "PaymentModel",
+    "PaymentStatus",
     "RefreshTokenModel",
     "Star",
     "UserGroupModel",
