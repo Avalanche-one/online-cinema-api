@@ -1,4 +1,3 @@
-from online_cinema_api.core.exceptions import PermissionForReadUserCartError
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
@@ -6,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from online_cinema_api.core.config import BaseAppSettings, Settings, get_settings
+from online_cinema_api.core.exceptions import PermissionForReadUserCartError
 from online_cinema_api.db.models import UserModel
 from online_cinema_api.db.models.accounts import UserGroupEnum
 from online_cinema_api.db.session import get_db_session
