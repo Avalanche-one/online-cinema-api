@@ -39,6 +39,60 @@ services:
     networks:
       - cinema_network
 
+  celery-worker:
+    build:
+      context: .
+    restart: unless-stopped
+    init: true
+    command:
+      [
+        "python",
+        "-m",
+        "celery",
+        "-A",
+        "online_cinema_api.celery_app:celery_app",
+        "worker",
+        "--loglevel=INFO",
+        "--concurrency=1",
+      ]
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-online_cinema}"
+      REDIS_URL: "redis://redis:6379/0"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cinema_network
+
+  celery-beat:
+    build:
+      context: .
+    restart: unless-stopped
+    init: true
+    command:
+      [
+        "python",
+        "-m",
+        "celery",
+        "-A",
+        "online_cinema_api.celery_app:celery_app",
+        "beat",
+        "--loglevel=INFO",
+        "--schedule=/home/appuser/celerybeat-schedule",
+      ]
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-online_cinema}"
+      REDIS_URL: "redis://redis:6379/0"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cinema_network
+
 networks:
   cinema_network:
     name: cinema_network
