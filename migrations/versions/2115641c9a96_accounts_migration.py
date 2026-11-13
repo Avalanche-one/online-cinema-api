@@ -8,9 +8,9 @@ Create Date: 2026-11-13 16:43:49.002924
 
 from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 from online_cinema_api.db.models.accounts import UserGroupEnum
 
 # revision identifiers, used by Alembic.
@@ -22,7 +22,6 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Оголошуємо таблицю для вставки через Alembic
     user_groups_table = sa.table(
         "user_groups",
         sa.column("id", sa.Integer),
@@ -31,7 +30,6 @@ def upgrade() -> None:
         ),
     )
 
-    # Використовуємо .value для кожного Enum, щоб передати їх значення
     op.bulk_insert(
         user_groups_table,
         [
