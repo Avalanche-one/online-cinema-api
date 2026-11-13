@@ -140,7 +140,9 @@ async def request_password_reset_token(
 
     await accounts_crud.recreate_password_reset_token(db, cast(int, user.id))
 
-    password_reset_complete_link = f"{settings.DOMAIN}/api/v1/accounts/password-reset-complete/"
+    password_reset_complete_link = (
+        f"{settings.DOMAIN}/api/v1/accounts/password-reset-complete/"
+    )
     await email_sender.send_password_reset_email(
         str(data.email), password_reset_complete_link
     )
