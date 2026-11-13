@@ -76,7 +76,9 @@ async def register_user(
             detail="An error occurred during user creation.",
         ) from e
 
-    activation_link = f"{settings.DOMAIN}/api/v1/accounts/activate/?token={activation_token.token}"
+    activation_link = (
+        f"{settings.DOMAIN}/api/v1/accounts/activate/?token={activation_token.token}"
+    )
     await email_sender.send_activation_email(new_user.email, activation_link)
 
     return UserRegistrationResponseSchema.model_validate(new_user)
