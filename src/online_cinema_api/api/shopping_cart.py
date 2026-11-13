@@ -12,6 +12,7 @@ from online_cinema_api.schemas.shopping_cart import (
 )
 from online_cinema_api.services.shopping_cart import (
     add_movie_to_cart,
+    delete_all_movie_from_cart,
     delete_movie_from_cart_by_user_id,
     get_movie_from_cart,
 )
@@ -47,3 +48,11 @@ async def read_cart(
     current_user: UserModel = Depends(get_current_user),
 ):
     return await get_movie_from_cart(db, current_user)
+
+
+@router.delete("/cart", status_code=status.HTTP_204_NO_CONTENT)
+async def dell_all_movie_in_cart(
+    db: AsyncSession = Depends(get_db_session),
+    current_user: UserModel = Depends(get_current_user),
+):
+    await delete_all_movie_from_cart(db, current_user)
