@@ -36,6 +36,10 @@ testpaths = ["tests"]
 ignore = [
     "B008", # ignore FastAPI Depends in function argument defaults
 ]
+exclude = ["migrations/versions/*.py"]
+
+[tool.ruff.format]
+exclude = ["migrations/versions/*.py"]
 
 [build-system]
 requires = ["hatchling"]
