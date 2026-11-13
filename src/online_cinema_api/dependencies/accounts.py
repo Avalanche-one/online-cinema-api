@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from online_cinema_api.core.config import BaseAppSettings, Settings, get_settings
+from online_cinema_api.db.models import UserModel
 from online_cinema_api.db.session import get_db_session
 from online_cinema_api.notifications import EmailSender, EmailSenderInterface
 from online_cinema_api.schemas import UserRead
@@ -86,3 +87,16 @@ def get_accounts_email_notificator(
         password_email_template_name=settings.PASSWORD_RESET_TEMPLATE_NAME,
         password_complete_email_template_name=settings.PASSWORD_RESET_COMPLETE_TEMPLATE_NAME,
     )
+
+
+async def get_current_admin_user(
+    current_user=Depends(get_current_user),
+) -> UserModel:
+
+    if not current_user.group or current_user.group.name != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Admins only.",
+        )
+
+    return current_user
