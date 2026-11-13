@@ -7,6 +7,7 @@ Revises: 4bfa4d0331c0
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
