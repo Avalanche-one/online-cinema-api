@@ -35,7 +35,9 @@ class Settings(BaseAppSettings):
     EMAIL_USE_TLS: bool = os.getenv("EMAIL_USE_TLS", "False").lower() == "true"
     MAILHOG_API_PORT: int = os.getenv("MAILHOG_API_PORT", "8025")
 
-    PATH_TO_EMAIL_TEMPLATES_DIR: str = str(BASE_DIR / "src" / "online_cinema_api" / "notifications" / "templates")
+    PATH_TO_EMAIL_TEMPLATES_DIR: str = str(
+        BASE_DIR / "src" / "online_cinema_api" / "notifications" / "templates"
+    )
     ACTIVATION_EMAIL_TEMPLATE_NAME: str = "activation_request.html"
     ACTIVATION_COMPLETE_EMAIL_TEMPLATE_NAME: str = "activation_complete.html"
     PASSWORD_RESET_TEMPLATE_NAME: str = "password_reset_request.html"
