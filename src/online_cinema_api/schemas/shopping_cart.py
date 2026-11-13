@@ -30,3 +30,13 @@ class CartItemResponse(BaseModel):
     movie_id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MoviePurchasedResponse(BaseModel):
+    id: int
+    name: str
+    price: Decimal
+    year: int
+    genres: list[str]
+
+    model_config = ConfigDict(from_attributes=True)
