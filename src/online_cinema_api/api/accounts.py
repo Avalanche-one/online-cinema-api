@@ -90,17 +90,17 @@ async def register_user(
     status_code=status.HTTP_200_OK,
 )
 async def activate_account(
-        token: str,
-        db: AsyncSession = Depends(get_db_session),
-        email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
+    token: str,
+    db: AsyncSession = Depends(get_db_session),
+    email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
     # Оскільки у вас є тільки token (без email у query), потрібно знаходити токен у БД разом із користувачем за самим токеном:
     token_record = await accounts_crud.get_activation_token_by_token(db, token)
 
     now_utc = datetime.now(UTC)
     if (
-            not token_record
-            or cast(datetime, token_record.expires_at).replace(tzinfo=UTC) < now_utc
+        not token_record
+        or cast(datetime, token_record.expires_at).replace(tzinfo=UTC) < now_utc
     ):
         if token_record:
             await accounts_crud.delete_token_and_commit(db, token_record)
@@ -113,9 +113,7 @@ async def activate_account(
     await accounts_crud.activate_user_account(db, user, token_record)
 
     login_link = f"{settings.DOMAIN}/api/v1/accounts/login/"
-    await email_sender.send_activation_complete_email(
-        str(user.email), login_link
-    )
+    await email_sender.send_activation_complete_email(str(user.email), login_link)
 
     return MessageResponseSchema(message="User account activated successfully.")
 
