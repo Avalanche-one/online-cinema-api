@@ -115,7 +115,7 @@ async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
     order = Order(
         user_id=user_id,
         status=OrderStatusEnum.PENDING,
-        total_amount=sum((item.movie.price for item in items_to_order), Decimal("0")),
+        total_amount=sum((item.movie.price for item in items_to_order), Decimal(0)),
         items=[
             OrderItem(movie_id=item.movie_id, price_at_order=item.movie.price)
             for item in items_to_order
