@@ -8,6 +8,7 @@ from online_cinema_api.core.exceptions import (
     MovieExistInOrderError,
     MovieNotFoundError,
     MovieNotInCartError,
+    UserNotFoundError,
 )
 from online_cinema_api.db.models import (
     Cart,
@@ -84,12 +85,12 @@ async def delete_movie_from_cart_by_user_id(
     await db.commit()
 
 
-async def get_movie_from_cart(db: AsyncSession, current_user: UserModel):
+async def get_movie_from_cart(db: AsyncSession, user_id: int):
     result = (
         await db.scalars(
             select(CartItem)
             .join(Cart, CartItem.cart_id == Cart.id)
-            .where(Cart.user_id == current_user.id)
+            .where(Cart.user_id == user_id)
             .options(selectinload(CartItem.movie).selectinload(Movie.genres))
             .order_by(CartItem.added_at)
         )
@@ -123,3 +124,9 @@ async def delete_all_movie_from_cart(db: AsyncSession, current_user: UserModel):
     delete_query = delete(CartItem).where(CartItem.id.in_(query))
     await db.execute(delete_query)
     await db.commit()
+
+
+async def see_cart_user_for_admin(db: AsyncSession, user_id: int):
+    if await db.get(UserModel, user_id) is None:
+        raise UserNotFoundError
+    return await get_movie_from_cart(db, user_id)
