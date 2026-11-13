@@ -96,3 +96,8 @@ class PermissionForReadUserCartError(AppError):
 class MovieInUserCartsError(AppError):
     status_code = 409
     detail = "This movie in cart users"
+
+
+class OrderNotPendingError(AppError):
+    status_code = 409
+    detail = "Only a pending order can be paid or recalculated."

@@ -31,3 +31,7 @@ class OrderListResponseSchema(BaseModel):
     per_page: int
     total_pages: int
     total_items: int
+
+
+class OrderCreateResponseSchema(OrderSchema):
+    removed_movies: list[str] = []

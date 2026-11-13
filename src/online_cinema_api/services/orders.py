@@ -9,11 +9,13 @@ from sqlalchemy.orm import selectinload
 from online_cinema_api.core.exceptions import (
     EmptyOrderError,
     OrderCancellationError,
+    OrderNotPendingError,
     PendingOrderExistsError,
 )
 from online_cinema_api.db.models import (
     Cart,
     CartItem,
+    Movie,
     Order,
     OrderItem,
     OrderStatusEnum,
@@ -149,3 +151,28 @@ async def cancel_order(db: AsyncSession, order: Order) -> Order:
     await db.commit()
     await db.refresh(order, attribute_names=["items"])
     return order
+
+
+async def revalidate_order_total(db: AsyncSession, order: Order) -> Order:
+    """Refresh the prices of a pending order from the current movie prices.
+
+    Must be called right before creating the payment, because movie prices
+    can change after the order was created.
+    """
+    if order.status != OrderStatusEnum.PENDING:
+        raise OrderNotPendingError
+
+    movies = (
+        await db.scalars(
+            select(Movie).where(Movie.id.in_([item.movie_id for item in order.items]))
+        )
+    ).all()
+    current_prices = {movie.id: movie.price for movie in movies}
+
+    for item in order.items:
+        item.price_at_order = current_prices[item.movie_id]
+    order.total_amount = sum(
+        (item.price_at_order for item in order.items), Decimal(0)
+    )
+    await db.commit()
+    return await get_order(db, order.id)
