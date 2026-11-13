@@ -5,6 +5,8 @@ from starlette import status
 from online_cinema_api.db.models.accounts import UserModel
 from online_cinema_api.db.session import get_db_session
 from online_cinema_api.dependencies import get_current_user
+from online_cinema_api.dependencies.accounts import required_moderator_or_admin
+from online_cinema_api.schemas import UserRead
 from online_cinema_api.schemas.shopping_cart import (
     CartItemAdd,
     CartItemResponse,
@@ -12,8 +14,10 @@ from online_cinema_api.schemas.shopping_cart import (
 )
 from online_cinema_api.services.shopping_cart import (
     add_movie_to_cart,
+    delete_all_movie_from_cart,
     delete_movie_from_cart_by_user_id,
     get_movie_from_cart,
+    see_cart_user_for_admin,
 )
 
 router = APIRouter(tags=["ShoppingCart"])
@@ -46,4 +50,21 @@ async def read_cart(
     db: AsyncSession = Depends(get_db_session),
     current_user: UserModel = Depends(get_current_user),
 ):
-    return await get_movie_from_cart(db, current_user)
+    return await get_movie_from_cart(db, current_user.id)
+
+
+@router.delete("/cart", status_code=status.HTTP_204_NO_CONTENT)
+async def dell_all_movie_in_cart(
+    db: AsyncSession = Depends(get_db_session),
+    current_user: UserModel = Depends(get_current_user),
+):
+    await delete_all_movie_from_cart(db, current_user)
+
+
+@router.get("/admin/carts/{user_id}", response_model=CartResponse)
+async def all_user_item_in_cart(
+    user_id: int,
+    db: AsyncSession = Depends(get_db_session),
+    _: UserRead = Depends(required_moderator_or_admin),
+):
+    return await see_cart_user_for_admin(db, user_id)
