@@ -228,7 +228,7 @@ async def login_user(
             detail="An error occurred while processing the request.",
         )
 
-    jwt_access_token = jwt_manager.create_access_token({"user_id": user.id})
+    jwt_access_token = jwt_manager.create_access_token({"sub": user.email})
     return UserLoginResponseSchema(
         access_token=jwt_access_token,
         refresh_token=jwt_refresh_token,
