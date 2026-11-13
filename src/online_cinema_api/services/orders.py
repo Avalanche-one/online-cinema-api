@@ -18,6 +18,10 @@ from online_cinema_api.db.models import (
     OrderItem,
     OrderStatusEnum,
 )
+from online_cinema_api.services.shopping_cart import (
+    remove_purchased_movies,
+    remove_unavailable_movies,
+)
 
 
 async def get_order(db: AsyncSession, order_id: int) -> Order | None:
@@ -92,7 +96,14 @@ async def is_movie_purchased(db: AsyncSession, movie_id: int) -> bool:
     return result.first() is not None
 
 
-async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
+async def create_order_from_cart(
+    db: AsyncSession, user_id: int
+) -> tuple[Order, list[str]]:
+    removed_names = [
+        *await remove_purchased_movies(db, user_id),
+        *await remove_unavailable_movies(db, user_id),
+    ]
+
     cart_items = (
         await db.scalars(
             select(CartItem)
@@ -102,28 +113,28 @@ async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
             .order_by(CartItem.added_at)
         )
     ).all()
-
-    purchased_ids = await get_purchased_movie_ids(db, user_id)
-    items_to_order = [item for item in cart_items if item.movie_id not in purchased_ids]
-    if not items_to_order:
-        raise EmptyOrderError
+    if not cart_items:
+        detail = "There are no movies available to order."
+        if removed_names:
+            detail += f" Removed from the cart: {', '.join(removed_names)}."
+        raise EmptyOrderError(detail)
 
     pending_ids = await get_pending_movie_ids(db, user_id)
-    if any(item.movie_id in pending_ids for item in items_to_order):
+    if any(item.movie_id in pending_ids for item in cart_items):
         raise PendingOrderExistsError
 
     order = Order(
         user_id=user_id,
         status=OrderStatusEnum.PENDING,
-        total_amount=sum((item.movie.price for item in items_to_order), Decimal(0)),
+        total_amount=sum((item.movie.price for item in cart_items), Decimal(0)),
         items=[
             OrderItem(movie_id=item.movie_id, price_at_order=item.movie.price)
-            for item in items_to_order
+            for item in cart_items
         ],
     )
     db.add(order)
     await db.commit()
-    return await get_order(db, order.id)
+    return await get_order(db, order.id), removed_names
 
 
 async def cancel_order(db: AsyncSession, order: Order) -> Order:
