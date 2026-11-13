@@ -1,4 +1,3 @@
-from dependencies.accounts import required_moderator_or_admin
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -6,6 +5,7 @@ from starlette import status
 from online_cinema_api.db.models.accounts import UserModel
 from online_cinema_api.db.session import get_db_session
 from online_cinema_api.dependencies import get_current_user
+from online_cinema_api.dependencies.accounts import required_moderator_or_admin
 from online_cinema_api.schemas import UserRead
 from online_cinema_api.schemas.shopping_cart import (
     CartItemAdd,
