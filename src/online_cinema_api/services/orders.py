@@ -1,15 +1,23 @@
 import math
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from online_cinema_api.db.models import Order, OrderItem, OrderStatusEnum
-
-
-class OrderCancellationError(Exception):
-    """Raised when an order cannot be canceled in its current status."""
+from online_cinema_api.core.exceptions import (
+    EmptyOrderError,
+    OrderCancellationError,
+    PendingOrderExistsError,
+)
+from online_cinema_api.db.models import (
+    Cart,
+    CartItem,
+    Order,
+    OrderItem,
+    OrderStatusEnum,
+)
 
 
 async def get_order(db: AsyncSession, order_id: int) -> Order | None:
@@ -56,20 +64,6 @@ async def list_orders(
     return list(result.scalars().all()), total_items, total_pages
 
 
-async def cancel_order(db: AsyncSession, order: Order) -> Order:
-    if order.status == OrderStatusEnum.PAID:
-        raise OrderCancellationError(
-            "A paid order can only be canceled through a refund request."
-        )
-    if order.status == OrderStatusEnum.CANCELED:
-        raise OrderCancellationError("The order is already canceled.")
-
-    order.status = OrderStatusEnum.CANCELED
-    await db.commit()
-    await db.refresh(order, attribute_names=["items"])
-    return order
-
-
 async def get_purchased_movie_ids(db: AsyncSession, user_id: int) -> set[int]:
     result = await db.execute(
         select(OrderItem.movie_id)
@@ -96,3 +90,51 @@ async def is_movie_purchased(db: AsyncSession, movie_id: int) -> bool:
         .limit(1)
     )
     return result.first() is not None
+
+
+async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
+    cart_items = (
+        await db.scalars(
+            select(CartItem)
+            .join(Cart, CartItem.cart_id == Cart.id)
+            .where(Cart.user_id == user_id)
+            .options(selectinload(CartItem.movie))
+            .order_by(CartItem.added_at)
+        )
+    ).all()
+
+    purchased_ids = await get_purchased_movie_ids(db, user_id)
+    items_to_order = [item for item in cart_items if item.movie_id not in purchased_ids]
+    if not items_to_order:
+        raise EmptyOrderError
+
+    pending_ids = await get_pending_movie_ids(db, user_id)
+    if any(item.movie_id in pending_ids for item in items_to_order):
+        raise PendingOrderExistsError
+
+    order = Order(
+        user_id=user_id,
+        status=OrderStatusEnum.PENDING,
+        total_amount=sum((item.movie.price for item in items_to_order), Decimal(0)),
+        items=[
+            OrderItem(movie_id=item.movie_id, price_at_order=item.movie.price)
+            for item in items_to_order
+        ],
+    )
+    db.add(order)
+    await db.commit()
+    return await get_order(db, order.id)
+
+
+async def cancel_order(db: AsyncSession, order: Order) -> Order:
+    if order.status == OrderStatusEnum.PAID:
+        raise OrderCancellationError(
+            "A paid order can only be canceled through a refund request."
+        )
+    if order.status == OrderStatusEnum.CANCELED:
+        raise OrderCancellationError("The order is already canceled.")
+
+    order.status = OrderStatusEnum.CANCELED
+    await db.commit()
+    await db.refresh(order, attribute_names=["items"])
+    return order
