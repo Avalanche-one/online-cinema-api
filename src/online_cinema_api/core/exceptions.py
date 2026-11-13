@@ -66,3 +66,13 @@ class RefreshTokenNotFoundError(AppError):
 class UserNotFoundError(AppError):
     status_code = 404
     detail = "User not found."
+
+
+class PermissionForReadUserCartError(AppError):
+    status_code = 403
+    detail = "Not enough permissions"
+
+
+class MovieInUserCartsError(AppError):
+    status_code = 409
+    detail = "This movie in cart users"

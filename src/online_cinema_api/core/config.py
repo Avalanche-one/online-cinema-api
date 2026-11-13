@@ -22,6 +22,8 @@ class BaseAppSettings(BaseSettings):
 
 
 class Settings(BaseAppSettings):
+    REDIS_URL: str = "redis://localhost:6379/0"
+
     SECRET_KEY_ACCESS: str = os.getenv("SECRET_KEY_ACCESS", os.urandom(32).hex())
     SECRET_KEY_REFRESH: str = os.getenv("SECRET_KEY_REFRESH", os.urandom(32).hex())
     JWT_SIGNING_ALGORITHM: str = os.getenv("JWT_SIGNING_ALGORITHM", "HS256")
