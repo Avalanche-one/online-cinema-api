@@ -45,6 +45,8 @@ class Settings(BaseAppSettings):
 
     DOMAIN: str = os.getenv("DOMAIN", "localhost")
 
+    LOGIN_TIME_DAYS: int = 7
+
 
 @lru_cache
 def get_settings() -> Settings:
