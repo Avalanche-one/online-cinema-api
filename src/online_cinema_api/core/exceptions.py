@@ -66,3 +66,33 @@ class RefreshTokenNotFoundError(AppError):
 class UserNotFoundError(AppError):
     status_code = 404
     detail = "User not found."
+
+
+class OrderNotFoundError(AppError):
+    status_code = 404
+    detail = "Order not found."
+
+
+class EmptyOrderError(AppError):
+    status_code = 400
+    detail = "There are no movies available to order."
+
+
+class PendingOrderExistsError(AppError):
+    status_code = 409
+    detail = "A pending order with the same movies already exists."
+
+
+class OrderCancellationError(AppError):
+    status_code = 409
+    detail = "The order cannot be canceled."
+
+
+class PermissionForReadUserCartError(AppError):
+    status_code = 403
+    detail = "Not enough permissions"
+
+
+class MovieInUserCartsError(AppError):
+    status_code = 409
+    detail = "This movie in cart users"

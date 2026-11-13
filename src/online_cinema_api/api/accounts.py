@@ -21,6 +21,7 @@ from online_cinema_api.dependencies import (
     get_accounts_email_notificator,
     get_jwt_auth_manager,
 )
+from online_cinema_api.dependencies.accounts import required_moderator_or_admin
 from online_cinema_api.exceptions import BaseSecurityError
 from online_cinema_api.notifications import EmailSenderInterface
 from online_cinema_api.schemas import (
@@ -318,6 +319,7 @@ async def logout_user(
     response_model=MessageResponseSchema,
     summary="Admin Manual User Activation",
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(required_moderator_or_admin)],
 )
 async def admin_activate_user(
     user_id: int,
@@ -339,6 +341,7 @@ async def admin_activate_user(
     response_model=MessageResponseSchema,
     summary="Admin Change User Group",
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(required_moderator_or_admin)],
 )
 async def admin_change_user_group(
     user_id: int,
