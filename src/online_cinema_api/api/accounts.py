@@ -26,7 +26,7 @@ from online_cinema_api.dependencies import (
 )
 from online_cinema_api.dependencies.accounts import (
     required_moderator_or_admin,
-    required_admin
+    required_admin,
 )
 from online_cinema_api.exceptions import BaseSecurityError
 from online_cinema_api.notifications import EmailSenderInterface

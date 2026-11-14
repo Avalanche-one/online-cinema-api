@@ -88,7 +88,10 @@ async def required_admin(
         .options(selectinload(UserModel.group))
         .where(UserModel.id == current_user.id)
     )
-    if group_of_current_user is None or group_of_current_user.group.name != UserGroupEnum.ADMIN:
+    if (
+        group_of_current_user is None
+        or group_of_current_user.group.name != UserGroupEnum.ADMIN
+    ):
         raise PermissionForReadUserCartError
     return current_user
 
