@@ -24,3 +24,28 @@ class EntityNotFoundError(AppError):
 class NameAlreadyExistsError(AppError):
     status_code = 409
     detail = "An entity with this name already exists"
+
+
+class MovieAlreadyInFavoritesError(AppError):
+    status_code = 409
+    detail = "Movie is already in favorites"
+
+
+class MovieNotInFavoritesError(AppError):
+    status_code = 404
+    detail = "Movie not found in favorites"
+
+
+class CommentNotFoundError(AppError):
+    status_code = 404
+    detail = "Comment not found"
+
+
+class CommentForbiddenError(AppError):
+    status_code = 403
+    detail = "You can delete only your own comments"
+
+
+class NotificationNotFoundError(AppError):
+    status_code = 404
+    detail = "Notification not found"

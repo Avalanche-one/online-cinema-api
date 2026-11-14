@@ -87,7 +87,6 @@ async def get_movies(
     params: MovieQueryParams,
     favorite_user_id: int | None = None,
 ) -> PaginatedResponse[MovieListItemSchema]:
-    """Каталог фільмів. Якщо передано favorite_user_id, то це список обраного."""
     conditions = _build_conditions(params, favorite_user_id)
 
     total = await db.scalar(select(func.count(Movie.id)).where(*conditions)) or 0
