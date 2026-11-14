@@ -1,7 +1,10 @@
 from datetime import UTC, datetime
 from typing import cast
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import HTMLResponse
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -136,11 +139,11 @@ async def request_password_reset_token(
             message="If you are registered, you will receive an email with instructions."
         )
 
-    await accounts_crud.recreate_password_reset_token(db, cast(int, user.id))
-
-    password_reset_complete_link = (
-        f"{settings.DOMAIN}/api/v1/accounts/password-reset-complete/"
+    token_record = await accounts_crud.recreate_password_reset_token(
+        db, cast(int, user.id)
     )
+
+    password_reset_complete_link = f"{settings.DOMAIN}/api/v1/accounts/password-reset/complete/?email={quote(str(data.email))}&token={token_record.token}"
     await email_sender.send_password_reset_email(
         str(data.email), password_reset_complete_link
     )
@@ -150,8 +153,24 @@ async def request_password_reset_token(
     )
 
 
+jinja_env = Environment(
+    loader=FileSystemLoader(settings.PATH_TO_EMAIL_TEMPLATES_DIR),
+    autoescape=select_autoescape(["html"]),
+)
+
+
+@router.get(
+    "/password-reset/complete/",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def password_reset_page(email: str, token: str) -> HTMLResponse:
+    template = jinja_env.get_template(settings.PASSWORD_RESET_PAGE_TEMPLATE_NAME)
+    return HTMLResponse(template.render(email=email, token=token))
+
+
 @router.post(
-    "/reset-password/complete/",
+    "/password-reset/complete/",
     response_model=MessageResponseSchema,
     summary="Reset User Password",
     status_code=status.HTTP_200_OK,

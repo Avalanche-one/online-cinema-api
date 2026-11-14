@@ -42,6 +42,7 @@ class Settings(BaseAppSettings):
     ACTIVATION_COMPLETE_EMAIL_TEMPLATE_NAME: str = "activation_complete.html"
     PASSWORD_RESET_TEMPLATE_NAME: str = "password_reset_request.html"
     PASSWORD_RESET_COMPLETE_TEMPLATE_NAME: str = "password_reset_complete.html"
+    PASSWORD_RESET_PAGE_TEMPLATE_NAME: str = "password_reset.html"
 
     DOMAIN: str = os.getenv("DOMAIN", "localhost")
 
