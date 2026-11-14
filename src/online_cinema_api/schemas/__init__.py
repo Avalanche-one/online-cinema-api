@@ -1,7 +1,10 @@
 from online_cinema_api.schemas.accounts import (
+    MeResponseSchema,
     MessageResponseSchema,
     PasswordResetCompleteRequestSchema,
     PasswordResetRequestSchema,
+    ProfileResponseSchema,
+    ProfileUpdateSchema,
     Token,
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
@@ -15,9 +18,12 @@ from online_cinema_api.schemas.accounts import (
 )
 
 __all__ = [
+    "MeResponseSchema",
     "MessageResponseSchema",
     "PasswordResetCompleteRequestSchema",
     "PasswordResetRequestSchema",
+    "ProfileResponseSchema",
+    "ProfileUpdateSchema",
     "Token",
     "TokenRefreshRequestSchema",
     "TokenRefreshResponseSchema",
