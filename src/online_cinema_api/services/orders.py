@@ -15,11 +15,11 @@ from online_cinema_api.core.exceptions import (
 from online_cinema_api.db.models import (
     Cart,
     CartItem,
+    Movie,
     Order,
     OrderItem,
     OrderStatusEnum,
 )
-from online_cinema_api.db.models.movies import Movie
 
 
 async def get_order(db: AsyncSession, order_id: int) -> Order | None:
