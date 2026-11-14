@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Quality and tests
+    name: quality
     runs-on: ubuntu-latest
 
     services:
