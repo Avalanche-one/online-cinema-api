@@ -14,9 +14,7 @@ from online_cinema_api.db.session import async_session_factory
 
 
 async def get_or_create(session, model, name: str):
-    instance = await session.scalar(
-        select(model).where(model.name == name)
-    )
+    instance = await session.scalar(select(model).where(model.name == name))
 
     if instance is None:
         instance = model(name=name)
@@ -31,9 +29,7 @@ async def seed_database() -> None:
         drama = await get_or_create(session, Genre, "Drama")
         crime = await get_or_create(session, Genre, "Crime")
 
-        director = await get_or_create(
-            session, Director, "Francis Ford Coppola"
-        )
+        director = await get_or_create(session, Director, "Francis Ford Coppola")
 
         star = await get_or_create(session, Star, "Al Pacino")
         certification = await get_or_create(session, Certification, "R")
