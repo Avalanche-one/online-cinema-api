@@ -5,7 +5,6 @@ on:
     branches:
       - main
       - development
-
   pull_request:
     branches:
       - main
@@ -20,8 +19,31 @@ concurrency:
 
 jobs:
   quality:
-    name: quality
+    name: Quality and tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: online_cinema_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d online_cinema_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/online_cinema_test
+      SECRET_KEY_ACCESS: ci-access-secret-key
+      SECRET_KEY_REFRESH: ci-refresh-secret-key
+      JWT_SIGNING_ALGORITHM: HS256
+      APP_ENV: testing
+      DEBUG: "false"
 
     steps:
       - name: Check out repository
@@ -31,26 +53,36 @@ jobs:
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: latest-known
-          python-version: "3.14"
           enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.14
 
       - name: Install dependencies
         run: uv sync --locked --all-groups
 
-      - name: Check Alembic migration heads
-        run: >
-          uv run python -c "from alembic.config import Config;
-          from alembic.script import ScriptDirectory;
-          heads = ScriptDirectory.from_config(Config('alembic.ini')).get_heads();
-          assert len(heads) == 1,
-          f'Expected exactly one Alembic head, found {len(heads)}: {heads}';
-          print(f'Alembic head: {heads[0]}')"
+      - name: Check Alembic heads
+        run: |
+          uv run python -c "from alembic.config import Config; from alembic.script import ScriptDirectory; heads = ScriptDirectory.from_config(Config('alembic.ini')).get_heads(); assert len(heads) == 1, f'Expected one head, got {heads}'"
 
-      - name: Check lint
+      - name: Apply migrations
+        run: uv run alembic upgrade head
+
+      - name: Ruff lint
         run: uv run ruff check .
 
-      - name: Check formatting
+      - name: Ruff formatting
         run: uv run ruff format --check .
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: uv run pytest
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-report
+          path: coverage.xml
+          if-no-files-found: error
+
+      - name: Build Docker image
+        run: docker build -t online-cinema-api:${{ github.sha }} .
