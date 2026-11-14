@@ -34,3 +34,18 @@ class MovieAlreadyInFavoritesError(AppError):
 class MovieNotInFavoritesError(AppError):
     status_code = 404
     detail = "Movie not found in favorites"
+
+
+class CommentNotFoundError(AppError):
+    status_code = 404
+    detail = "Comment not found"
+
+
+class CommentForbiddenError(AppError):
+    status_code = 403
+    detail = "You can delete only your own comments"
+
+
+class NotificationNotFoundError(AppError):
+    status_code = 404
+    detail = "Notification not found"
