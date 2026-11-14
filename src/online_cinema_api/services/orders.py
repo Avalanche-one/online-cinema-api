@@ -20,15 +20,15 @@ from online_cinema_api.db.models import (
     OrderItem,
     OrderStatusEnum,
 )
-from online_cinema_api.services.shopping_cart import (
-    remove_purchased_movies,
-    remove_unavailable_movies,
-)
+from online_cinema_api.db.models.movies import Movie
 
 
 async def get_order(db: AsyncSession, order_id: int) -> Order | None:
     result = await db.execute(
-        select(Order).options(selectinload(Order.items)).where(Order.id == order_id)
+        select(Order)
+        .options(selectinload(Order.items).selectinload(OrderItem.movie))
+        .where(Order.id == order_id)
+        .execution_options(populate_existing=True)
     )
     return result.scalar_one_or_none()
 
@@ -61,7 +61,7 @@ async def list_orders(
 
     result = await db.execute(
         select(Order)
-        .options(selectinload(Order.items))
+        .options(selectinload(Order.items).selectinload(OrderItem.movie))
         .where(*conditions)
         .order_by(Order.created_at.desc(), Order.id.desc())
         .offset((page - 1) * per_page)
@@ -98,14 +98,7 @@ async def is_movie_purchased(db: AsyncSession, movie_id: int) -> bool:
     return result.first() is not None
 
 
-async def create_order_from_cart(
-    db: AsyncSession, user_id: int
-) -> tuple[Order, list[str]]:
-    removed_names = [
-        *await remove_purchased_movies(db, user_id),
-        *await remove_unavailable_movies(db, user_id),
-    ]
-
+async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
     cart_items = (
         await db.scalars(
             select(CartItem)
@@ -115,28 +108,28 @@ async def create_order_from_cart(
             .order_by(CartItem.added_at)
         )
     ).all()
-    if not cart_items:
-        detail = "There are no movies available to order."
-        if removed_names:
-            detail += f" Removed from the cart: {', '.join(removed_names)}."
-        raise EmptyOrderError(detail)
+
+    purchased_ids = await get_purchased_movie_ids(db, user_id)
+    items_to_order = [item for item in cart_items if item.movie_id not in purchased_ids]
+    if not items_to_order:
+        raise EmptyOrderError
 
     pending_ids = await get_pending_movie_ids(db, user_id)
-    if any(item.movie_id in pending_ids for item in cart_items):
+    if any(item.movie_id in pending_ids for item in items_to_order):
         raise PendingOrderExistsError
 
     order = Order(
         user_id=user_id,
         status=OrderStatusEnum.PENDING,
-        total_amount=sum((item.movie.price for item in cart_items), Decimal(0)),
+        total_amount=sum((item.movie.price for item in items_to_order), Decimal(0)),
         items=[
             OrderItem(movie_id=item.movie_id, price_at_order=item.movie.price)
-            for item in cart_items
+            for item in items_to_order
         ],
     )
     db.add(order)
     await db.commit()
-    return await get_order(db, order.id), removed_names
+    return await get_order(db, order.id)
 
 
 async def cancel_order(db: AsyncSession, order: Order) -> Order:
@@ -149,8 +142,7 @@ async def cancel_order(db: AsyncSession, order: Order) -> Order:
 
     order.status = OrderStatusEnum.CANCELED
     await db.commit()
-    await db.refresh(order, attribute_names=["items"])
-    return order
+    return await get_order(db, order.id)
 
 
 async def revalidate_order_total(db: AsyncSession, order: Order) -> Order:
