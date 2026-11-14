@@ -20,7 +20,6 @@ from online_cinema_api.db.models import (
     OrderItem,
     OrderStatusEnum,
 )
-from online_cinema_api.db.models.movies import Movie
 
 
 async def get_order(db: AsyncSession, order_id: int) -> Order | None:
