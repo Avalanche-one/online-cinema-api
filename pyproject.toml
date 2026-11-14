@@ -25,12 +25,35 @@ dependencies = [
 dev = [
     "httpx2>=2.16.0",
     "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.17.4",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+addopts = [
+    "--strict-markers",
+    "--cov=online_cinema_api",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/online_cinema_api"]
+omit = [
+    "src/online_cinema_api/__init__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+]
+#fail_under = 80
 
 [tool.ruff.lint]
 ignore = [

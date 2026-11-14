@@ -16,6 +16,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY src/ ./src/
 COPY README.md ./
+COPY alembic.ini ./
+COPY migrations/ ./migrations/
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
