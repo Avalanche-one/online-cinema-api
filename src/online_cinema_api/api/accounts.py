@@ -24,7 +24,10 @@ from online_cinema_api.dependencies import (
     get_accounts_email_notificator,
     get_jwt_auth_manager,
 )
-from online_cinema_api.dependencies.accounts import required_moderator_or_admin
+from online_cinema_api.dependencies.accounts import (
+    required_admin,
+    required_moderator_or_admin,
+)
 from online_cinema_api.exceptions import BaseSecurityError
 from online_cinema_api.notifications import EmailSenderInterface
 from online_cinema_api.schemas import (
@@ -289,7 +292,12 @@ async def refresh_access_token(
     if not user:
         raise UserNotFoundError()
 
-    new_access_token = jwt_manager.create_access_token({"user_id": user_id})
+    new_access_token = jwt_manager.create_access_token(
+        {
+            "sub": user.email,
+            "user_id": user.id,
+        }
+    )
 
     return TokenRefreshResponseSchema(access_token=new_access_token)
 
@@ -365,7 +373,7 @@ async def admin_activate_user(
     response_model=MessageResponseSchema,
     summary="Admin Change User Group",
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(required_moderator_or_admin)],
+    dependencies=[Depends(required_admin)],
 )
 async def admin_change_user_group(
     user_id: int,
