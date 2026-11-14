@@ -79,6 +79,23 @@ async def required_moderator_or_admin(
     return current_user
 
 
+async def required_admin(
+    current_user: UserRead = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    group_of_current_user = await db.scalar(
+        select(UserModel)
+        .options(selectinload(UserModel.group))
+        .where(UserModel.id == current_user.id)
+    )
+    if (
+        group_of_current_user is None
+        or group_of_current_user.group.name != UserGroupEnum.ADMIN
+    ):
+        raise PermissionForReadUserCartError
+    return current_user
+
+
 def get_accounts_email_notificator(
     settings: Settings = Depends(get_settings),
 ) -> EmailSenderInterface:
