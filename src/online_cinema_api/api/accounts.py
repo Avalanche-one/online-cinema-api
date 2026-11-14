@@ -19,25 +19,31 @@ from online_cinema_api.core.exceptions import (
     UserGroupNotFoundError,
     UserNotFoundError,
 )
+from online_cinema_api.db.models import UserModel
 from online_cinema_api.db.session import get_db_session
 from online_cinema_api.dependencies import (
     get_accounts_email_notificator,
     get_jwt_auth_manager,
 )
 from online_cinema_api.dependencies.accounts import (
+    get_current_user,
     required_admin,
     required_moderator_or_admin,
 )
 from online_cinema_api.exceptions import BaseSecurityError
 from online_cinema_api.notifications import EmailSenderInterface
 from online_cinema_api.schemas import (
+    MeResponseSchema,
     MessageResponseSchema,
     PasswordResetCompleteRequestSchema,
     PasswordResetRequestSchema,
+    ProfileResponseSchema,
+    ProfileUpdateSchema,
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
     UserLoginRequestSchema,
     UserLoginResponseSchema,
+    UserRead,
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
 )
@@ -387,3 +393,60 @@ async def admin_change_user_group(
     user.group_id = new_group_id
     await db.commit()
     return MessageResponseSchema(message="User group updated successfully.")
+
+
+def _to_me_response(user: UserModel) -> MeResponseSchema:
+    return MeResponseSchema(
+        id=user.id,
+        email=user.email,
+        is_active=user.is_active,
+        group=user.group.name,
+        profile=(
+            ProfileResponseSchema.model_validate(user.profile) if user.profile else None
+        ),
+    )
+
+
+@router.get(
+    "/me/",
+    response_model=MeResponseSchema,
+    summary="Get current user profile",
+    status_code=status.HTTP_200_OK,
+)
+async def get_me(
+    current_user: UserRead = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> MeResponseSchema:
+    user = await accounts_crud.get_user_with_profile(db, current_user.id)
+    if user is None:
+        raise UserNotFoundError()
+    return _to_me_response(user)
+
+
+@router.patch(
+    "/me/",
+    response_model=MeResponseSchema,
+    summary="Update current user profile",
+    status_code=status.HTTP_200_OK,
+)
+async def update_me(
+    data: ProfileUpdateSchema,
+    current_user: UserRead = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> MeResponseSchema:
+    user = await accounts_crud.get_user_with_profile(db, current_user.id)
+    if user is None:
+        raise UserNotFoundError()
+
+    try:
+        user = await accounts_crud.update_user_profile(
+            db, user, data.model_dump(exclude_unset=True)
+        )
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while updating the profile.",
+        )
+
+    return _to_me_response(user)

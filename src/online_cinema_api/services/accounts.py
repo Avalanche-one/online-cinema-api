@@ -1,7 +1,7 @@
 from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from online_cinema_api.db.models.accounts import (
     ActivationTokenModel,
@@ -10,6 +10,7 @@ from online_cinema_api.db.models.accounts import (
     UserGroupEnum,
     UserGroupModel,
     UserModel,
+    UserProfileModel,
 )
 
 
@@ -46,6 +47,7 @@ async def create_user_with_activation(
             raw_password=raw_password,
             group_id=group_id,
         )
+        new_user.profile = UserProfileModel()
         db.add(new_user)
         await db.flush()
 
@@ -180,3 +182,25 @@ async def get_activation_token_by_token(
     )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
+
+
+async def get_user_with_profile(db: AsyncSession, user_id: int) -> UserModel | None:
+    return await db.scalar(
+        select(UserModel)
+        .options(selectinload(UserModel.profile), selectinload(UserModel.group))
+        .where(UserModel.id == user_id)
+        .execution_options(populate_existing=True)
+    )
+
+
+async def update_user_profile(
+    db: AsyncSession, user: UserModel, data: dict
+) -> UserModel:
+    if user.profile is None:
+        user.profile = UserProfileModel(**data)
+    else:
+        for field, value in data.items():
+            setattr(user.profile, field, value)
+
+    await db.commit()
+    return await get_user_with_profile(db, user.id)
