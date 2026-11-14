@@ -25,8 +25,8 @@ from online_cinema_api.dependencies import (
     get_jwt_auth_manager,
 )
 from online_cinema_api.dependencies.accounts import (
-    required_moderator_or_admin,
     required_admin,
+    required_moderator_or_admin,
 )
 from online_cinema_api.exceptions import BaseSecurityError
 from online_cinema_api.notifications import EmailSenderInterface
