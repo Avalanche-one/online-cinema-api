@@ -10,8 +10,6 @@ from online_cinema_api.db.models.movie_interactions import (
 )
 from online_cinema_api.schemas.movie_comments import CommentSchema, NotificationSchema
 
-# --- Коментарі ---
-
 
 def _likes_count_subquery():
     return (
@@ -84,12 +82,8 @@ async def list_comments(
 
 
 async def delete_comment_by_id(db: AsyncSession, comment_id: int) -> None:
-    # відповіді, лайки й сповіщення видаляє сама БД (ON DELETE CASCADE)
     await db.execute(delete(Comment).where(Comment.id == comment_id))
     await db.commit()
-
-
-# --- Лайки коментарів ---
 
 
 async def get_comment_like(
@@ -113,9 +107,6 @@ async def count_comment_likes(db: AsyncSession, comment_id: int) -> int:
     )
 
 
-# --- Сповіщення ---
-
-
 def _to_notification_schema(
     notification: Notification, movie_id: int
 ) -> NotificationSchema:
@@ -133,7 +124,6 @@ def _to_notification_schema(
 async def delete_unread_like_notifications(
     db: AsyncSession, actor_id: int, comment_id: int
 ) -> None:
-    """Коли лайк прибрали, непрочитане сповіщення про нього більше не потрібне."""
     await db.execute(
         delete(Notification).where(
             Notification.actor_id == actor_id,

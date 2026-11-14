@@ -48,16 +48,15 @@ async def _create_comment(
         text=text,
     )
     db.add(comment)
-    await db.flush()  # отримуємо comment.id для сповіщення
+    await db.flush()
     comment_id = comment.id
 
-    # про відповіді на власні коментарі не сповіщаємо
     if parent is not None and parent.user_id != user_id:
         db.add(
             Notification(
                 user_id=parent.user_id,
                 actor_id=user_id,
-                comment_id=comment_id,  # id самої відповіді
+                comment_id=comment_id,
                 type=NotificationType.COMMENT_REPLY,
             )
         )
@@ -85,7 +84,6 @@ async def add_reply(
 async def list_movie_comments(
     db: AsyncSession, movie_id: int, params: PageParams
 ) -> PaginatedResponse[CommentSchema]:
-    """Коментарі верхнього рівня; відповіді віддає list_replies."""
     await ensure_movie_exists(db, movie_id)
     items, total = await crud.list_comments(
         db,
@@ -138,7 +136,7 @@ async def toggle_comment_like(
                 Notification(
                     user_id=comment.user_id,
                     actor_id=user_id,
-                    comment_id=comment_id,  # id лайкнутого коментаря
+                    comment_id=comment_id,
                     type=NotificationType.COMMENT_LIKE,
                 )
             )
@@ -148,7 +146,7 @@ async def toggle_comment_like(
 
     try:
         await db.commit()
-    except IntegrityError:  # два паралельні запити від одного користувача
+    except IntegrityError:
         await db.rollback()
 
     liked = await crud.get_comment_like(db, user_id, comment_id) is not None

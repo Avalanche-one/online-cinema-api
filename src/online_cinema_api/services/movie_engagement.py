@@ -30,7 +30,6 @@ async def ensure_movie_exists(db: AsyncSession, movie_id: int) -> None:
 async def toggle_reaction(
     db: AsyncSession, user_id: int, movie_id: int, reaction: ReactionType
 ) -> MovieStatsSchema:
-    """Та сама реакція вдруге прибирає її, протилежна замінює."""
     await ensure_movie_exists(db, movie_id)
 
     existing = await crud.get_reaction(db, user_id, movie_id)
@@ -106,5 +105,4 @@ async def remove_from_favorites(db: AsyncSession, user_id: int, movie_id: int) -
 async def get_favorites(
     db: AsyncSession, user_id: int, params: MovieQueryParams
 ) -> PaginatedResponse[MovieListItemSchema]:
-    """Обране: той самий пошук, фільтри й сортування, що й у каталозі."""
     return await movie_catalog.get_movies(db, params, favorite_user_id=user_id)

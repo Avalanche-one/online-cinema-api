@@ -40,7 +40,7 @@ async def get_movie_by_id(db: AsyncSession, movie_id: int) -> Movie:
 async def save_movie(db: AsyncSession, movie: Movie) -> Movie:
     db.add(movie)
     try:
-        await db.flush()  # порушення unique (name, year, time) виникає тут
+        await db.flush()
         movie_id = movie.id
         await db.commit()
     except IntegrityError:
