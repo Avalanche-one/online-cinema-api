@@ -9,6 +9,7 @@ from online_cinema_api.db.models import OrderStatusEnum
 class OrderItemSchema(BaseModel):
     id: int
     movie_id: int
+    movie_name: str
     price_at_order: Decimal
 
     model_config = ConfigDict(from_attributes=True)

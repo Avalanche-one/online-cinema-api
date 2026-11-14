@@ -72,6 +72,10 @@ class OrderItem(Base):
     order: Mapped[Order] = relationship("Order", back_populates="items")
     movie: Mapped[Movie] = relationship("Movie")
 
+    @property
+    def movie_name(self) -> str:
+        return self.movie.name
+
     __table_args__ = (
         UniqueConstraint("order_id", "movie_id", name="unique_order_movie_constraint"),
     )
