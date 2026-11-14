@@ -68,6 +68,31 @@ class UserNotFoundError(AppError):
     detail = "User not found."
 
 
+class GetPurchasedMoviesError(AppError):
+    status_code = 404
+    detail = "Smt error with get purchased movies."
+
+
+class RemovePurchasedMoviesError(AppError):
+    status_code = 404
+    detail = "Smt error with remove purchased movies."
+
+
+class MovieNotInAnyCartError(AppError):
+    status_code = 404
+    detail = "Smt error with movie not in any cart."
+
+
+class MovieInAnyCartError(AppError):
+    status_code = 404
+    detail = "Smt error with movie in any cart."
+
+
+class RemoveUnavailableMovies(AppError):
+    status_code = 404
+    detail = "Smt error with get purchased movies."
+
+
 class OrderNotFoundError(AppError):
     status_code = 404
     detail = "Order not found."
