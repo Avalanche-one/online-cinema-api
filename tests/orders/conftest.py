@@ -67,7 +67,9 @@ def database() -> None:
 
     async def recreate() -> None:
         async with db_engine.begin() as connection:
-            await connection.run_sync(Base.metadata.drop_all, tables=list(reversed(TABLES)))
+            await connection.run_sync(
+                Base.metadata.drop_all, tables=list(reversed(TABLES))
+            )
             await connection.run_sync(Base.metadata.create_all, tables=TABLES)
 
     asyncio.run(recreate())
