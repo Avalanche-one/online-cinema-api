@@ -61,3 +61,11 @@ class PaymentItemModel(Base):
 
     payment: Mapped[PaymentModel] = relationship(back_populates="items")
     order_item: Mapped[OrderItem] = relationship()
+
+    @property
+    def movie_name(self) -> str:
+        return self.order_item.movie.name
+
+    @property
+    def movie_id(self) -> int:
+        return self.order_item.movie_id

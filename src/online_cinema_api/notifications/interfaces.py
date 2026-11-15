@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from decimal import Decimal
 
 
 class EmailSenderInterface(ABC):
@@ -42,4 +43,18 @@ class EmailSenderInterface(ABC):
         Args:
             email (str): The recipient's email address.
             login_link (str): The login link to include in the email.
+        """
+
+    @abstractmethod
+    async def send_payment_confirmation_email(
+        self, email: str, order_id: int, amount: Decimal, movies: list[str]
+    ) -> None:
+        """
+        Asynchronously send an email confirming a successful payment.
+
+        Args:
+            email (str): The recipient's email address.
+            order_id (int): The paid order's ID.
+            amount (Decimal): The paid amount.
+            movies (list[str]): Titles of the purchased movies.
         """
