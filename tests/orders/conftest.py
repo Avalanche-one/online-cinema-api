@@ -151,9 +151,7 @@ def make_user() -> Callable[..., UserInfo]:
             session.add(user)
             await session.flush()
             if birth_date is not None:
-                session.add(
-                    UserProfileModel(user_id=user.id, date_of_birth=birth_date)
-                )
+                session.add(UserProfileModel(user_id=user.id, date_of_birth=birth_date))
             await session.commit()
             return user.id
 
