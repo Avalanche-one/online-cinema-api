@@ -172,9 +172,6 @@ async def recreate_activation_token(
 async def get_activation_token_by_token(
     db: AsyncSession, token: str
 ) -> ActivationTokenModel | None:
-    """
-    Шукає запис активаційного токена за самим токеном разом із пов'язаним користувачем.
-    """
     stmt = (
         select(ActivationTokenModel)
         .options(joinedload(ActivationTokenModel.user))
