@@ -32,7 +32,7 @@ from online_cinema_api.security.token_manager import JWTAuthManager
 
 db_engine = create_async_engine(settings.database_url, poolclass=NullPool)
 
-EXCLUDED_TABLES = {"payments"}
+EXCLUDED_TABLES = set()
 TABLES = [
     table for table in Base.metadata.sorted_tables if table.name not in EXCLUDED_TABLES
 ]
@@ -67,7 +67,7 @@ def database() -> None:
 
     async def recreate() -> None:
         async with db_engine.begin() as connection:
-            await connection.run_sync(Base.metadata.drop_all, tables=TABLES)
+            await connection.run_sync(Base.metadata.drop_all, tables=list(reversed(TABLES)))
             await connection.run_sync(Base.metadata.create_all, tables=TABLES)
 
     asyncio.run(recreate())
