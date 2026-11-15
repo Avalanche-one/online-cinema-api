@@ -8,6 +8,7 @@ from online_cinema_api.api.router import api_router
 from online_cinema_api.core.config import settings
 from online_cinema_api.core.exceptions import AppError
 from online_cinema_api.db.session import engine
+from online_cinema_api.exceptions import BaseEmailError, BaseSecurityError
 
 
 @asynccontextmanager
@@ -31,6 +32,23 @@ async def app_error_handler(_: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
+    )
+
+
+@app.exception_handler(BaseSecurityError)
+async def security_error_handler(_: Request, exc: BaseSecurityError) -> JSONResponse:
+    return JSONResponse(
+        status_code=401,
+        content={"detail": str(exc)},
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+@app.exception_handler(BaseEmailError)
+async def email_error_handler(_: Request, exc: BaseEmailError) -> JSONResponse:
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Email service is temporarily unavailable."},
     )
 
 

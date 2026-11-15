@@ -19,8 +19,8 @@ celery_app.conf.update(
     task_ignore_result=True,
     broker_connection_retry_on_startup=True,
     beat_schedule={
-        "delete-expired-activation-tokens-hourly": {
-            "task": "tokens.delete_expired_activation_tokens",
+        "delete-expired-tokens-hourly": {
+            "task": "tokens.delete_expired_tokens",
             "schedule": crontab(minute=0),
         },
     },
