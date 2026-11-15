@@ -48,16 +48,11 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db_session),
     jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
 ) -> UserRead:
-    token = credentials.credentials
-    payload = jwt_manager.decode_access_token(token)
-    if payload is None:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    payload = jwt_manager.decode_access_token(credentials.credentials)
     email = payload.get("sub")
-    if email is None:
+    db_user = await get_user_by_email(db, email) if email else None
+    if db_user is None or not db_user.is_active:
         raise HTTPException(status_code=401, detail="Invalid token")
-    db_user = await get_user_by_email(db, email)
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
     return UserRead.model_validate(db_user)
 
 

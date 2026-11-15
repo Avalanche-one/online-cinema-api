@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 from jose import ExpiredSignatureError, JWTError, jwt
 
@@ -29,8 +30,7 @@ class JWTAuthManager(JWTAuthManagerInterface):
         Create a JWT token with provided data, secret key, and expiration time.
         """
         to_encode = data.copy()
-        expire = datetime.now(UTC) + expires_delta
-        to_encode.update({"exp": expire})
+        to_encode.update({"exp": datetime.now(UTC) + expires_delta, "jti": uuid4().hex})
         return jwt.encode(to_encode, secret_key, algorithm=self._algorithm)
 
     def create_access_token(
