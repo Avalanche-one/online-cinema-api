@@ -1,5 +1,7 @@
 from decimal import Decimal
+
 from fastapi.testclient import TestClient
+
 from online_cinema_api.db.models import OrderStatusEnum
 
 
