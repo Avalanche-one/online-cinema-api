@@ -79,7 +79,6 @@ async def complete_payment(
     """Mark payment successful, order paid and drop purchased movies from the cart."""
     payment.status = PaymentStatus.SUCCESSFUL
     if payment_intent_id:
-        # pi_... is needed later for refunds
         payment.external_payment_id = payment_intent_id
 
     order = await db.get(Order, payment.order_id)
