@@ -32,7 +32,7 @@ from online_cinema_api.security.token_manager import JWTAuthManager
 
 db_engine = create_async_engine(settings.database_url, poolclass=NullPool)
 
-EXCLUDED_TABLES = {"payments", "payment_items"}
+EXCLUDED_TABLES = {"payments"}
 TABLES = [
     table for table in Base.metadata.sorted_tables if table.name not in EXCLUDED_TABLES
 ]
