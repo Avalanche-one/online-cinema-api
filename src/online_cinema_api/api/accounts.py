@@ -325,9 +325,13 @@ async def resend_activation_token(
             message="If the account exists and is inactive, a new token has been sent."
         )
 
-    await accounts_crud.recreate_activation_token(db, cast(int, user.id))
+    activation_token = await accounts_crud.recreate_activation_token(
+        db, cast(int, user.id)
+    )
 
-    activation_link = f"{settings.DOMAIN}/api/v1/accounts/activate/"
+    activation_link = (
+        f"{settings.DOMAIN}/api/v1/accounts/activate/?token={activation_token.token}"
+    )
     await email_sender.send_activation_email(user.email, activation_link)
 
     return MessageResponseSchema(message="Activation email resent successfully.")
