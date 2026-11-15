@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -15,9 +15,7 @@ from online_cinema_api.security.interfaces import JWTAuthManagerInterface
 from online_cinema_api.security.token_manager import JWTAuthManager
 from online_cinema_api.services import get_user_by_email
 
-router = APIRouter()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+bearer_scheme = HTTPBearer()
 
 
 def get_jwt_auth_manager(
@@ -46,10 +44,11 @@ def get_jwt_auth_manager(
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_db_session),
     jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
 ) -> UserRead:
+    token = credentials.credentials
     payload = jwt_manager.decode_access_token(token)
     if payload is None:
         raise HTTPException(status_code=401, detail="Invalid token")

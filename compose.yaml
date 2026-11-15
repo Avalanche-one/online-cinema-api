@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
@@ -23,11 +23,29 @@ services:
     networks:
       - cinema_network
 
+  seed:
+    build:
+      context: .
+    restart: "no"
+    command:
+      [
+        "python",
+        "-m",
+        "online_cinema_api.db.seed",
+      ]
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-online_cinema}"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - cinema_network
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -39,20 +57,41 @@ services:
     networks:
       - cinema_network
 
-  web:
+  migrate:
     build:
       context: .
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
+    restart: "no"
+    command:
+      [
+        "uv",
+        "run",
+        "alembic",
+        "upgrade",
+        "head",
+      ]
     environment:
       DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-online_cinema}"
       REDIS_URL: "redis://redis:6379/0"
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - cinema_network
+
+  web:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-online_cinema}"
+      REDIS_URL: "redis://redis:6379/0"
+    depends_on:
+      seed:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     networks:
@@ -78,8 +117,8 @@ services:
       DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-online_cinema}"
       REDIS_URL: "redis://redis:6379/0"
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     networks:
@@ -105,8 +144,8 @@ services:
       DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-online_cinema}"
       REDIS_URL: "redis://redis:6379/0"
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     networks:
