@@ -3,7 +3,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import aiosmtplib
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from online_cinema_api.exceptions import BaseEmailError
 from online_cinema_api.notifications.interfaces import EmailSenderInterface
@@ -39,7 +39,10 @@ class EmailSender(EmailSenderInterface):
             password_complete_email_template_name
         )
 
-        self._env = Environment(loader=FileSystemLoader(template_dir))
+        self._env = Environment(
+            loader=FileSystemLoader(template_dir),
+            autoescape=select_autoescape(["html"]),
+        )
 
     async def _send_email(
         self, recipient: str, subject: str, html_content: str
@@ -62,15 +65,12 @@ class EmailSender(EmailSenderInterface):
         message.attach(MIMEText(html_content, "html"))
 
         try:
-            smtp = aiosmtplib.SMTP(
+            async with aiosmtplib.SMTP(
                 hostname=self._hostname, port=self._port, start_tls=self._use_tls
-            )
-            await smtp.connect()
-            # Видалено повторний виклик await smtp.starttls()
-            await smtp.login(self._email, self._password)
-            await smtp.sendmail(self._email, [recipient], message.as_string())
-            await smtp.quit()
-        except aiosmtplib.SMTPException as error:
+            ) as smtp:
+                await smtp.login(self._email, self._password)
+                await smtp.sendmail(self._email, [recipient], message.as_string())
+        except (aiosmtplib.SMTPException, OSError) as error:
             logger.error(f"Failed to send email to {recipient}: {error}")
             raise BaseEmailError(f"Failed to send email to {recipient}: {error}")
 

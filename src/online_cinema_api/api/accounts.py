@@ -1,8 +1,10 @@
-from datetime import UTC, datetime
+import secrets
+from datetime import UTC, datetime, timedelta
 from typing import cast
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy.exc import SQLAlchemyError
@@ -19,7 +21,7 @@ from online_cinema_api.core.exceptions import (
     UserGroupNotFoundError,
     UserNotFoundError,
 )
-from online_cinema_api.db.models import UserModel
+from online_cinema_api.db.models import UserGroupModel, UserModel
 from online_cinema_api.db.session import get_db_session
 from online_cinema_api.dependencies import (
     get_accounts_email_notificator,
@@ -30,7 +32,6 @@ from online_cinema_api.dependencies.accounts import (
     required_admin,
     required_moderator_or_admin,
 )
-from online_cinema_api.exceptions import BaseSecurityError
 from online_cinema_api.notifications import EmailSenderInterface
 from online_cinema_api.schemas import (
     MeResponseSchema,
@@ -61,6 +62,7 @@ router = APIRouter(tags=["Accounts"])
 )
 async def register_user(
     user_data: UserRegistrationRequestSchema,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session),
     email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> UserRegistrationResponseSchema:
@@ -90,7 +92,10 @@ async def register_user(
     activation_link = (
         f"{settings.DOMAIN}/api/v1/accounts/activate/?token={activation_token.token}"
     )
-    await email_sender.send_activation_email(new_user.email, activation_link)
+
+    background_tasks.add_task(
+        email_sender.send_activation_email, new_user.email, activation_link
+    )
 
     return UserRegistrationResponseSchema.model_validate(new_user)
 
@@ -103,10 +108,10 @@ async def register_user(
 )
 async def activate_account(
     token: str,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session),
     email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
-    # Оскільки у вас є тільки token (без email у query), потрібно знаходити токен у БД разом із користувачем за самим токеном:
     token_record = await accounts_crud.get_activation_token_by_token(db, token)
 
     now_utc = datetime.now(UTC)
@@ -125,7 +130,10 @@ async def activate_account(
     await accounts_crud.activate_user_account(db, user, token_record)
 
     login_link = f"{settings.DOMAIN}/api/v1/accounts/login/"
-    await email_sender.send_activation_complete_email(str(user.email), login_link)
+
+    background_tasks.add_task(
+        email_sender.send_activation_complete_email, str(user.email), login_link
+    )
 
     return MessageResponseSchema(message="User account activated successfully.")
 
@@ -138,6 +146,7 @@ async def activate_account(
 )
 async def request_password_reset_token(
     data: PasswordResetRequestSchema,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session),
     email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
@@ -153,8 +162,11 @@ async def request_password_reset_token(
     )
 
     password_reset_complete_link = f"{settings.DOMAIN}/api/v1/accounts/password-reset/complete/?email={quote(str(data.email))}&token={token_record.token}"
-    await email_sender.send_password_reset_email(
-        str(data.email), password_reset_complete_link
+
+    background_tasks.add_task(
+        email_sender.send_password_reset_email,
+        str(data.email),
+        password_reset_complete_link,
     )
 
     return MessageResponseSchema(
@@ -186,6 +198,7 @@ async def password_reset_page(email: str, token: str) -> HTMLResponse:
 )
 async def reset_password(
     data: PasswordResetCompleteRequestSchema,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session),
     email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
@@ -195,9 +208,9 @@ async def reset_password(
 
     token_record = await accounts_crud.get_password_reset_token(db, user.id)
 
-    if not token_record or token_record.token != data.token:
-        if token_record:
-            await accounts_crud.delete_token_and_commit(db, token_record)
+    if not token_record or not secrets.compare_digest(
+        token_record.token.encode(), data.token.encode()
+    ):
         raise InvalidActivationTokenError("Invalid email or token.")
 
     expires_at = cast(datetime, token_record.expires_at).replace(tzinfo=UTC)
@@ -216,7 +229,10 @@ async def reset_password(
         )
 
     login_link = f"{settings.DOMAIN}/api/v1/accounts/login/"
-    await email_sender.send_password_reset_complete_email(str(data.email), login_link)
+
+    background_tasks.add_task(
+        email_sender.send_password_reset_complete_email, str(data.email), login_link
+    )
 
     return MessageResponseSchema(message="Password reset successfully.")
 
@@ -235,13 +251,18 @@ async def login_user(
 ) -> UserLoginResponseSchema:
     user = await accounts_crud.get_user_by_email(db, str(login_data.email))
 
-    if not user or not user.verify_password(login_data.password):
+    if not user or not await run_in_threadpool(
+        user.verify_password, login_data.password
+    ):
         raise InvalidCredentialsError()
 
     if not user.is_active:
         raise AccountNotActivatedError()
 
-    jwt_refresh_token = jwt_manager.create_refresh_token({"user_id": user.id})
+    jwt_refresh_token = jwt_manager.create_refresh_token(
+        {"user_id": user.id},
+        expires_delta=timedelta(days=settings.LOGIN_TIME_DAYS),
+    )
 
     try:
         await accounts_crud.create_refresh_token_record(
@@ -279,14 +300,8 @@ async def refresh_access_token(
     db: AsyncSession = Depends(get_db_session),
     jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
 ) -> TokenRefreshResponseSchema:
-    try:
-        decoded_token = jwt_manager.decode_refresh_token(token_data.refresh_token)
-        user_id = decoded_token.get("user_id")
-    except BaseSecurityError as error:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(error),
-        )
+    decoded_token = jwt_manager.decode_refresh_token(token_data.refresh_token)
+    user_id = decoded_token.get("user_id")
 
     refresh_token_record = await accounts_crud.get_refresh_token_record(
         db, token_data.refresh_token
@@ -295,7 +310,7 @@ async def refresh_access_token(
         raise RefreshTokenNotFoundError()
 
     user = await accounts_crud.get_user_by_id(db, user_id)
-    if not user:
+    if not user or not user.is_active:
         raise UserNotFoundError()
 
     new_access_token = jwt_manager.create_access_token(
@@ -316,14 +331,15 @@ async def refresh_access_token(
 )
 async def resend_activation_token(
     data: PasswordResetRequestSchema,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session),
     email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
     user = await accounts_crud.get_user_by_email(db, str(data.email))
+    RESEND_MESSAGE = "If the account exists and is inactive, a new token has been sent."
+
     if not user or user.is_active:
-        return MessageResponseSchema(
-            message="If the account exists and is inactive, a new token has been sent."
-        )
+        return MessageResponseSchema(message=RESEND_MESSAGE)
 
     activation_token = await accounts_crud.recreate_activation_token(
         db, cast(int, user.id)
@@ -332,9 +348,12 @@ async def resend_activation_token(
     activation_link = (
         f"{settings.DOMAIN}/api/v1/accounts/activate/?token={activation_token.token}"
     )
-    await email_sender.send_activation_email(user.email, activation_link)
 
-    return MessageResponseSchema(message="Activation email resent successfully.")
+    background_tasks.add_task(
+        email_sender.send_activation_email, user.email, activation_link
+    )
+
+    return MessageResponseSchema(message=RESEND_MESSAGE)
 
 
 @router.post(
@@ -393,6 +412,10 @@ async def admin_change_user_group(
     user = await accounts_crud.get_user_by_id(db, user_id)
     if not user:
         raise UserNotFoundError()
+
+    group = await db.get(UserGroupModel, new_group_id)
+    if group is None:
+        raise HTTPException(status_code=404, detail="Group not found.")
 
     user.group_id = new_group_id
     await db.commit()

@@ -119,6 +119,9 @@ async def update_password_and_delete_token(
     try:
         user.password = new_password
         await db.delete(token_record)
+        await db.execute(
+            delete(RefreshTokenModel).where(RefreshTokenModel.user_id == user.id)
+        )
         await db.commit()
     except SQLAlchemyError:
         await db.rollback()
