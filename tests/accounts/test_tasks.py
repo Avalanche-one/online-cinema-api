@@ -1,7 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from celery.schedules import crontab
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.pool import NullPool
 
@@ -10,6 +9,7 @@ from online_cinema_api.core.config import settings
 from online_cinema_api.tasks import token_cleanup as tc
 
 TASK_NAME = "tokens.delete_expired_tokens"
+SCHEDULE_NAME = "delete-expired-tokens-every-minute"
 CLEANUP_RESULT = {"activation": 1, "password_reset": 2, "refresh": 3}
 
 
@@ -28,14 +28,14 @@ def test_celery_app_basic_config():
 
 
 def test_beat_schedule_runs_cleanup_every_minute():
-    entry = celery_app.conf.beat_schedule["delete-expired-tokens-every-minute"]
+    entry = celery_app.conf.beat_schedule[SCHEDULE_NAME]
 
     assert entry["task"] == TASK_NAME
-    assert entry["schedule"] == crontab(minute=0)
+    assert entry["schedule"] == 60.0
 
 
 def test_scheduled_task_is_registered():
-    entry = celery_app.conf.beat_schedule["delete-expired-tokens-every-minute"]
+    entry = celery_app.conf.beat_schedule[SCHEDULE_NAME]
 
     assert entry["task"] in celery_app.tasks
     assert celery_app.tasks[TASK_NAME].name == tc.delete_expired_tokens_task.name
