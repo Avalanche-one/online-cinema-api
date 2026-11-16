@@ -136,3 +136,13 @@ class InvalidPaymentAmountError(AppError):
 class PaymentProviderError(AppError):
     status_code = 400
     detail = "Payment failed. Try a different payment method or try again later."
+
+
+class PaymentNotFoundError(AppError):
+    status_code = 404
+    detail = "Payment not found."
+
+
+class PaymentNotRefundableError(AppError):
+    status_code = 409
+    detail = "Only a successful payment can be refunded."
