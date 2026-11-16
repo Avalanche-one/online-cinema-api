@@ -128,7 +128,7 @@ async def test_send_methods_render_template_and_send(
 ):
     await getattr(sender, method)(*args)
 
-    client, from_addr, recipients, message, body = _parse_sent(smtp)
+    _client, from_addr, recipients, message, body = _parse_sent(smtp)
     assert from_addr == "noreply@cinema.test"
     assert recipients == ["u@x.com"]
     assert message["From"] == "noreply@cinema.test"

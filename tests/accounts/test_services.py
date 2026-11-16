@@ -134,7 +134,7 @@ async def test_get_activation_token_with_user_no_match(db_session, groups):
 
 
 async def test_get_activation_token_by_token(db_session, groups):
-    user, token = await svc.create_user_with_activation(
+    _user, token = await svc.create_user_with_activation(
         db_session, "act@example.com", VALID_PASSWORD, groups[UserGroupEnum.USER].id
     )
 
