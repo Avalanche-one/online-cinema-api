@@ -14,6 +14,10 @@ class BaseAppSettings(BaseSettings):
     debug: bool = True
     database_url: str
 
+    docs_enabled: bool = False
+    docs_username: str = ""
+    docs_password: str = ""
+
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
         env_file_encoding="utf-8",
