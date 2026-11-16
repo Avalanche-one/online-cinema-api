@@ -20,6 +20,7 @@ The deployed environment provides accounts for each supported role:
 | User | [user@online-cinema.space](mailto:user@online-cinema.space) | `Secret@123` |
 | Moderator | [moderator@online-cinema.space](mailto:moderator@online-cinema.space) | `Secret@123` |
 | Admin | [admin@online-cinema.space](mailto:admin@online-cinema.space) | `Secret@123` |
+| Swagger | docs | `strong_password` |
 
 > These credentials are public demo credentials. Do not reuse the password for personal or production accounts.
 
