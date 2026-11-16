@@ -126,3 +126,13 @@ class MovieInUserCartsError(AppError):
 class OrderNotPendingError(AppError):
     status_code = 409
     detail = "Only a pending order can be paid or recalculated."
+
+
+class InvalidPaymentAmountError(AppError):
+    status_code = 400
+    detail = "Invalid order amount."
+
+
+class PaymentProviderError(AppError):
+    status_code = 400
+    detail = "Payment failed. Try a different payment method or try again later."

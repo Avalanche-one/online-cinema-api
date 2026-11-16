@@ -54,8 +54,14 @@ class PasswordResetCompleteRequestSchema(BaseEmailPasswordSchema):
     token: str
 
 
-class UserLoginRequestSchema(BaseEmailPasswordSchema):
-    pass
+class UserLoginRequestSchema(BaseModel):
+    email: EmailStr
+    password: str
+
+    @field_validator("email")
+    @classmethod
+    def lower_email(cls, value):
+        return value.lower()
 
 
 class UserLoginResponseSchema(BaseModel):

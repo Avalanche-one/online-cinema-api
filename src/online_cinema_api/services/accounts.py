@@ -119,6 +119,9 @@ async def update_password_and_delete_token(
     try:
         user.password = new_password
         await db.delete(token_record)
+        await db.execute(
+            delete(RefreshTokenModel).where(RefreshTokenModel.user_id == user.id)
+        )
         await db.commit()
     except SQLAlchemyError:
         await db.rollback()
@@ -172,9 +175,6 @@ async def recreate_activation_token(
 async def get_activation_token_by_token(
     db: AsyncSession, token: str
 ) -> ActivationTokenModel | None:
-    """
-    Шукає запис активаційного токена за самим токеном разом із пов'язаним користувачем.
-    """
     stmt = (
         select(ActivationTokenModel)
         .options(joinedload(ActivationTokenModel.user))

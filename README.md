@@ -108,6 +108,40 @@ docker compose logs -f celery-beat
 - PostgreSQL: localhost:5432
 - Redis: localhost:6379
 
+
+### Payment Config
+
+Payments use Stripe in test mode. Install the [Stripe CLI](https://docs.stripe.com/stripe-cli) first.
+
+1. **Add your Stripe secret key** (Dashboard → Developers → API keys, `sk_test_...`) to `.env`:
+
+   ```env
+   STRIPE_SECRET_KEY=sk_test_...
+   ```
+
+2. **Log in and start forwarding webhooks** to the app (keep this terminal running while testing payments):
+
+   ```bash
+   stripe login
+   stripe listen --events checkout.session.completed,checkout.session.expired,charge.refunded --forward-to localhost:8000/api/v1/payments/webhook
+   ```
+
+3. **Copy the webhook signing secret** printed by `stripe listen` (`whsec_...`) to `.env`:
+
+   ```env
+   STRIPE_WEBHOOK_SECRET=whsec_...
+   ```
+
+4. **Recreate the web container** so it picks up the new variables:
+
+   ```bash
+   docker compose up -d --build web
+   ```
+
+5. **Pay** with the test card `4242 4242 4242 4242` (any future date, any CVC).
+   In the `stripe listen` terminal you should see `<-- [200] POST .../payments/webhook`;
+   the payment becomes `successful`, the order `paid`, and a confirmation email is sent.
+
 ## Development
 
 ```bash
