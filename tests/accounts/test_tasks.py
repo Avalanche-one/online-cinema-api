@@ -27,15 +27,15 @@ def test_celery_app_basic_config():
     assert "online_cinema_api.tasks.token_cleanup" in conf.include
 
 
-def test_beat_schedule_runs_cleanup_hourly():
-    entry = celery_app.conf.beat_schedule["delete-expired-tokens-hourly"]
+def test_beat_schedule_runs_cleanup_every_minute():
+    entry = celery_app.conf.beat_schedule["delete-expired-tokens-every-minute"]
 
     assert entry["task"] == TASK_NAME
     assert entry["schedule"] == crontab(minute=0)
 
 
 def test_scheduled_task_is_registered():
-    entry = celery_app.conf.beat_schedule["delete-expired-tokens-hourly"]
+    entry = celery_app.conf.beat_schedule["delete-expired-tokens-every-minute"]
 
     assert entry["task"] in celery_app.tasks
     assert celery_app.tasks[TASK_NAME].name == tc.delete_expired_tokens_task.name
