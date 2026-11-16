@@ -1,5 +1,6 @@
 from decimal import Decimal
 from email import message_from_string
+from typing import ClassVar
 from unittest.mock import AsyncMock
 
 import aiosmtplib
@@ -49,9 +50,9 @@ def smtp(monkeypatch):
     """Replace aiosmtplib.SMTP. Failures can be simulated through the class attributes."""
 
     class FakeSMTP:
-        instances: list[FakeSMTP] = []
-        fail_on: str | None = None
-        error: Exception | None = None
+        instances: ClassVar[list["FakeSMTP"]] = []
+        fail_on: ClassVar[str | None] = None
+        error: ClassVar[Exception | None] = None
 
         def __init__(self, **kwargs):
             self.kwargs = kwargs
@@ -128,7 +129,7 @@ async def test_send_methods_render_template_and_send(
 ):
     await getattr(sender, method)(*args)
 
-    _client, from_addr, recipients, message, body = _parse_sent(smtp)
+    client, from_addr, recipients, message, body = _parse_sent(smtp)
     assert from_addr == "noreply@cinema.test"
     assert recipients == ["u@x.com"]
     assert message["From"] == "noreply@cinema.test"
@@ -170,7 +171,7 @@ async def test_payment_template_name_has_default(template_dir, smtp):
         password_complete_email_template_name="reset_complete.html",
     )
 
-    await sender.send_payment_confirmation_email("u@x.com", 1, Decimal(5), ["A"])
+    await sender.send_payment_confirmation_email("u@x.com", 1, Decimal("5"), ["A"])
 
     *_, body = _parse_sent(smtp)
     assert "ORDER 1" in body
