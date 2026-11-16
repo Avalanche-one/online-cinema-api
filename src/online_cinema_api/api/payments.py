@@ -11,6 +11,8 @@ from online_cinema_api.core.exceptions import (
     InvalidPaymentAmountError,
     OrderNotFoundError,
     OrderNotPendingError,
+    PaymentNotFoundError,
+    PaymentNotRefundableError,
     PaymentProviderError,
 )
 from online_cinema_api.db.models import OrderStatusEnum, PaymentStatus
@@ -209,6 +211,41 @@ async def success(session_id: str) -> PaymentResultSchema:
 async def cancel() -> PaymentResultSchema:
     return PaymentResultSchema(
         message="Payment canceled.", recommendation=TRY_AGAIN_RECOMMENDATION
+    )
+
+
+@router.post(
+    "/{payment_id}/refund",
+    response_model=PaymentResultSchema,
+    summary="Request a refund",
+    description=(
+        "Requests a full refund of a successful payment from Stripe. "
+        "The payment becomes refunded and its order canceled once Stripe "
+        "confirms the refund via the webhook."
+    ),
+    responses={
+        400: {"description": "Stripe rejected the refund."},
+        404: {"description": "Payment not found."},
+        409: {"description": "Only a successful payment can be refunded."},
+    },
+)
+async def refund(
+    payment_id: int, db: DbSession, current_user: CurrentUser
+) -> PaymentResultSchema:
+    payment = await payments_service.get_payment(db, payment_id)
+    if payment is None or payment.user_id != current_user.id:
+        raise PaymentNotFoundError
+    if payment.status != PaymentStatus.SUCCESSFUL:
+        raise PaymentNotRefundableError
+
+    try:
+        await stripe.Refund.create_async(payment_intent=payment.external_payment_id)
+    except stripe.StripeError as error:
+        logger.warning("Stripe refund failed for payment %s: %s", payment.id, error)
+        raise PaymentProviderError("Refund failed. Please try again later.")
+
+    return PaymentResultSchema(
+        message="Refund requested. The money will be returned to your card."
     )
 
 

@@ -89,6 +89,7 @@ async def complete_payment(
 
 
 async def mark_refunded(db: AsyncSession, payment_intent_id: str) -> None:
+    """Mark payment refunded and cancel its order, so movies are no longer owned."""
     payment = await db.scalar(
         select(PaymentModel).where(
             PaymentModel.external_payment_id == payment_intent_id
@@ -96,6 +97,8 @@ async def mark_refunded(db: AsyncSession, payment_intent_id: str) -> None:
     )
     if payment:
         payment.status = PaymentStatus.REFUNDED
+        order = await db.get(Order, payment.order_id)
+        order.status = OrderStatusEnum.CANCELED
         await db.commit()
 
 
