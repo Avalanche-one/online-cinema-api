@@ -52,3 +52,5 @@ tmp/
 temp/
 
 coverage.xml
+
+*.dump
