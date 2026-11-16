@@ -81,8 +81,8 @@ def app(db_session, jwt_manager, email_sender) -> FastAPI:
 
     application.dependency_overrides[get_db_session] = _db
     application.dependency_overrides[get_jwt_auth_manager] = lambda: jwt_manager
-    application.dependency_overrides[get_accounts_email_notificator] = (
-        lambda: email_sender
+    application.dependency_overrides[get_accounts_email_notificator] = lambda: (
+        email_sender
     )
     return application
 
@@ -98,9 +98,7 @@ async def client(app):
 @pytest.fixture
 def auth(jwt_manager):
     def _headers(user: UserModel) -> dict[str, str]:
-        token = jwt_manager.create_access_token(
-            {"sub": user.email, "user_id": user.id}
-        )
+        token = jwt_manager.create_access_token({"sub": user.email, "user_id": user.id})
         return {"Authorization": f"Bearer {token}"}
 
     return _headers
@@ -466,7 +464,9 @@ async def test_reset_password_database_error(
     )
 
     assert response.status_code == 500
-    assert response.json() == {"detail": "An error occurred while resetting the password."}
+    assert response.json() == {
+        "detail": "An error occurred while resetting the password."
+    }
     assert email_sender.sent == []
 
 
@@ -570,7 +570,9 @@ async def test_login_database_error(client, user_factory, monkeypatch):
     response = await client.post(f"{BASE}/login/", json=_credentials())
 
     assert response.status_code == 500
-    assert response.json() == {"detail": "An error occurred while processing the request."}
+    assert response.json() == {
+        "detail": "An error occurred while processing the request."
+    }
 
 
 async def _login(client) -> dict:
@@ -710,7 +712,9 @@ async def test_logout_removes_refresh_token(client, db_session, user_factory):
 
     assert response.status_code == 200
     assert response.json() == {"message": "Successfully logged out."}
-    assert await svc.get_refresh_token_record(db_session, tokens["refresh_token"]) is None
+    assert (
+        await svc.get_refresh_token_record(db_session, tokens["refresh_token"]) is None
+    )
     refresh = await client.post(
         f"{BASE}/refresh/", json={"refresh_token": tokens["refresh_token"]}
     )
@@ -766,7 +770,9 @@ async def test_admin_activate_allowed_for_moderator_and_admin(
     )
 
     assert response.status_code == 200
-    assert response.json() == {"message": "User t@example.com has been manually activated."}
+    assert response.json() == {
+        "message": "User t@example.com has been manually activated."
+    }
     await db_session.refresh(target)
     assert target.is_active is True
 
@@ -774,13 +780,17 @@ async def test_admin_activate_allowed_for_moderator_and_admin(
 async def test_admin_activate_unknown_user(client, user_factory, auth):
     actor = await user_factory(email="a@example.com", group=UserGroupEnum.ADMIN)
 
-    response = await client.patch(f"{BASE}/admin/users/9999/activate/", headers=auth(actor))
+    response = await client.patch(
+        f"{BASE}/admin/users/9999/activate/", headers=auth(actor)
+    )
 
     assert response.status_code == 404
     assert response.json() == {"detail": "User not found."}
 
 
-async def test_admin_change_group_success(client, db_session, groups, user_factory, auth):
+async def test_admin_change_group_success(
+    client, db_session, groups, user_factory, auth
+):
     actor = await user_factory(email="a@example.com", group=UserGroupEnum.ADMIN)
     target = await user_factory(email="t@example.com")
     moderator_id = groups[UserGroupEnum.MODERATOR].id
@@ -935,10 +945,14 @@ async def test_update_me_creates_profile(client, user_factory, auth):
 async def test_update_me_is_partial(client, user_factory, auth):
     user = await user_factory()
     await client.patch(
-        f"{BASE}/me/", headers=auth(user), json={"first_name": "Ann", "last_name": "Lee"}
+        f"{BASE}/me/",
+        headers=auth(user),
+        json={"first_name": "Ann", "last_name": "Lee"},
     )
 
-    response = await client.patch(f"{BASE}/me/", headers=auth(user), json={"info": "Hi"})
+    response = await client.patch(
+        f"{BASE}/me/", headers=auth(user), json={"info": "Hi"}
+    )
 
     profile = response.json()["profile"]
     assert profile["first_name"] == "Ann"
@@ -1014,4 +1028,6 @@ async def test_update_me_database_error(client, user_factory, auth, monkeypatch)
     )
 
     assert response.status_code == 500
-    assert response.json() == {"detail": "An error occurred while updating the profile."}
+    assert response.json() == {
+        "detail": "An error occurred while updating the profile."
+    }

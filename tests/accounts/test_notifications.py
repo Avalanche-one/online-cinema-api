@@ -49,7 +49,7 @@ def smtp(monkeypatch):
     """Replace aiosmtplib.SMTP. Failures can be simulated through the class attributes."""
 
     class FakeSMTP:
-        instances: list["FakeSMTP"] = []
+        instances: list[FakeSMTP] = []
         fail_on: str | None = None
         error: Exception | None = None
 
@@ -170,7 +170,7 @@ async def test_payment_template_name_has_default(template_dir, smtp):
         password_complete_email_template_name="reset_complete.html",
     )
 
-    await sender.send_payment_confirmation_email("u@x.com", 1, Decimal("5"), ["A"])
+    await sender.send_payment_confirmation_email("u@x.com", 1, Decimal(5), ["A"])
 
     *_, body = _parse_sent(smtp)
     assert "ORDER 1" in body

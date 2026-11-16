@@ -45,9 +45,7 @@ def test_generate_secure_token_is_url_safe_and_unique():
     tokens = {generate_secure_token() for _ in range(100)}
 
     assert len(tokens) == 100
-    allowed = set(
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-    )
+    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_")
     assert all(set(t) <= allowed for t in tokens)
 
 
@@ -162,7 +160,9 @@ def test_token_signed_with_other_algorithm_is_rejected(jwt_manager):
 def test_tampered_token_is_rejected(jwt_manager):
     token = jwt_manager.create_access_token({"sub": "x"})
     head, body, signature = token.split(".")
-    tampered = ".".join([head, body[:-2] + ("AA" if body[-2:] != "AA" else "BB"), signature])
+    tampered = ".".join(
+        [head, body[:-2] + ("AA" if body[-2:] != "AA" else "BB"), signature]
+    )
 
     with pytest.raises(InvalidTokenError):
         jwt_manager.decode_access_token(tampered)

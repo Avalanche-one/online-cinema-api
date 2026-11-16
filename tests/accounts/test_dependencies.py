@@ -65,7 +65,9 @@ def test_get_accounts_email_notificator_builds_email_sender():
     assert sender._payment_confirmation_email_template_name == "e.html"
 
 
-async def test_get_current_user_returns_user_read(db_session, user_factory, jwt_manager):
+async def test_get_current_user_returns_user_read(
+    db_session, user_factory, jwt_manager
+):
     user = await user_factory(email="me@example.com")
     token = jwt_manager.create_access_token({"sub": "me@example.com"})
 

@@ -11,13 +11,13 @@ os.environ.setdefault("SECRET_KEY_ACCESS", "test-access-secret")
 os.environ.setdefault("SECRET_KEY_REFRESH", "test-refresh-secret")
 os.environ.setdefault("JWT_SIGNING_ALGORITHM", "HS256")
 
-import pytest  # noqa: E402
-import pytest_asyncio  # noqa: E402
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # noqa: E402
-from sqlalchemy.pool import StaticPool  # noqa: E402
+import pytest
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
-from online_cinema_api.db.base import Base  # noqa: E402
-from online_cinema_api.db.models.accounts import (  # noqa: E402
+from online_cinema_api.db.base import Base
+from online_cinema_api.db.models.accounts import (
     ActivationTokenModel,
     PasswordResetTokenModel,
     RefreshTokenModel,
@@ -26,8 +26,8 @@ from online_cinema_api.db.models.accounts import (  # noqa: E402
     UserModel,
     UserProfileModel,
 )
-from online_cinema_api.security.passwords import pwd_context  # noqa: E402
-from online_cinema_api.security.token_manager import JWTAuthManager  # noqa: E402
+from online_cinema_api.security.passwords import pwd_context
+from online_cinema_api.security.token_manager import JWTAuthManager
 
 VALID_PASSWORD = "StrongPass1!"
 
@@ -39,6 +39,7 @@ ACCOUNT_TABLES = [
     PasswordResetTokenModel.__table__,
     RefreshTokenModel.__table__,
 ]
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -76,9 +77,7 @@ async def engine():
     )
     async with eng.begin() as conn:
         await conn.run_sync(
-            lambda sync_conn: Base.metadata.create_all(
-                sync_conn, tables=ACCOUNT_TABLES
-            )
+            lambda sync_conn: Base.metadata.create_all(sync_conn, tables=ACCOUNT_TABLES)
         )
     yield eng
     await eng.dispose()

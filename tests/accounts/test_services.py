@@ -17,7 +17,7 @@ from online_cinema_api.db.models.accounts import (
 SERVICES_MODULE = "online_cinema_api.services.accounts"
 svc = importlib.import_module(SERVICES_MODULE)
 
-from .conftest import VALID_PASSWORD  # noqa: E402
+from .conftest import VALID_PASSWORD
 
 
 async def _count(db, model) -> int:
@@ -38,7 +38,9 @@ async def test_create_user(db_session, groups):
 async def test_get_user_by_email(db_session, user_factory):
     created = await user_factory(email="find@example.com")
 
-    assert (await svc.get_user_by_email(db_session, "find@example.com")).id == created.id
+    assert (
+        await svc.get_user_by_email(db_session, "find@example.com")
+    ).id == created.id
     assert await svc.get_user_by_email(db_session, "missing@example.com") is None
 
 

@@ -35,7 +35,9 @@ def test_registration_lowercases_email():
     assert schema.password == VALID_PASSWORD
 
 
-@pytest.mark.parametrize("password", ["short1!", "nouppercase1!", "NoDigits!!", "NoSpecial12"])
+@pytest.mark.parametrize(
+    "password", ["short1!", "nouppercase1!", "NoDigits!!", "NoSpecial12"]
+)
 def test_registration_rejects_weak_password(password):
     with pytest.raises(ValidationError):
         UserRegistrationRequestSchema(email="user@example.com", password=password)
@@ -53,7 +55,9 @@ def test_password_reset_complete_requires_token_and_strong_password():
     assert schema.token == "tkn"
 
     with pytest.raises(ValidationError):
-        PasswordResetCompleteRequestSchema(email="a@example.com", password=VALID_PASSWORD)
+        PasswordResetCompleteRequestSchema(
+            email="a@example.com", password=VALID_PASSWORD
+        )
     with pytest.raises(ValidationError):
         PasswordResetCompleteRequestSchema(
             email="a@example.com", password="weak", token="tkn"
