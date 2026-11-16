@@ -1,5 +1,4 @@
 from celery import Celery
-from celery.schedules import crontab
 
 from online_cinema_api.core.config import settings
 
@@ -19,9 +18,9 @@ celery_app.conf.update(
     task_ignore_result=True,
     broker_connection_retry_on_startup=True,
     beat_schedule={
-        "delete-expired-tokens-hourly": {
+        "delete-expired-tokens-every-minute": {
             "task": "tokens.delete_expired_tokens",
-            "schedule": crontab(minute=0),
+            "schedule": 60.0,
         },
     },
 )

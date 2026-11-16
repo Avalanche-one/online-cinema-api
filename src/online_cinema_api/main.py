@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from online_cinema_api.api.documentation import create_documentation_router
 from online_cinema_api.api.router import api_router
 from online_cinema_api.core.config import settings
 from online_cinema_api.core.exceptions import AppError
@@ -24,6 +25,9 @@ app = FastAPI(
     debug=settings.debug,
     version="0.1.0",
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 
@@ -52,4 +56,12 @@ async def email_error_handler(_: Request, exc: BaseEmailError) -> JSONResponse:
     )
 
 
+if settings.docs_enabled:
+    if not settings.docs_username or not settings.docs_password:
+        raise RuntimeError(
+            "DOCS_USERNAME and DOCS_PASSWORD must be configured "
+            "when documentation is enabled."
+        )
+
+    app.include_router(create_documentation_router(app))
 app.include_router(api_router, prefix="/api/v1")
